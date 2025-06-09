@@ -1,6 +1,11 @@
-# dependapy
+# DEPENDAPY
 
-This is a custom `dependabot` alternative which can run without any external service or settings. It's designed to work with Python projects that use `pyproject.toml` and is compatible with the `uv` package manager from astral.sh.
+[![GitHub Actions](https://img.shields.io/github/actions/workflow/status/YOUR_USERNAME/dependapy/dependapy.yml?branch=main&label=CI)](https://github.com/YOUR_USERNAME/dependapy/actions)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![PyPI](https://img.shields.io/pypi/v/dependapy.svg)](https://pypi.org/project/dependapy/)
+[![codecov](https://codecov.io/gh/YOUR_USERNAME/dependapy/branch/main/graph/badge.svg)](https://codecov.io/gh/YOUR_USERNAME/dependapy)
+[![Website](https://img.shields.io/badge/website-stefanposs.com-blue)](https://stefanposs.com)
 
 ## Features
 
