@@ -3,7 +3,7 @@ name = "dependapy"
 version = "0.1.0"
 description = "A custom dependabot alternative for Python projects"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = {file = "LICENSE"}
 authors = [
     {name = "stefanposs", email = "hello@stefanposs.com"},
@@ -47,7 +47,6 @@ build-backend = "hatchling.build"
 packages = ["dependapy"]
 
 [tool.ruff]
-target-version = "py310"
 line-length = 100
 lint.select = ["ALL"]  # Enable all rules
 lint.ignore = [
