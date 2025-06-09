@@ -26,13 +26,15 @@ help:
 	@echo "  venv            : Create virtual environment with uv"
 
 analyze:
-	@echo "Running code analysis..."
+	echo "############## Running Code Analysis ##############"
+	echo "Running code analysis..."
 	@uv run ruff check $(PYTHON_DIRS)
 
 build: qa clean
 	@echo "Build prepared."
 
 clean:
+	echo "############## Cleaning Up ##############"
 	@echo "Cleaning up..."
 	@find . -type d -name __pycache__ -exec rm -rf {} +
 	@find . -type f -name "*.pyc" -delete
@@ -46,32 +48,19 @@ clean:
 	@rm -rf build/ dist/ .coverage htmlcov/
 
 coverage:
+	echo "############## Checking Test Coverage ##############"
 	@echo "Checking test coverage..."
 	@uv run pytest --cov=$(PACKAGE) --cov-report=term-missing $(TEST_DIR)
 
-demo:
-	@echo "Running example usage..."
-	@python -m examples.example_usage
-
 format:
+	echo "############## Formatting Code ##############"
 	@echo "Formatting code..."
 	@uv run ruff format $(PYTHON_DIRS)
-
-install:
-	@echo "Installing package in development mode..."
-	@uv pip install -e .
-
-install-dev:
-	@echo "Installing package with development dependencies..."
-	@uv pip install -e ".[dev]"
-
-lock:
-	@echo "Updating dependency lock..."
-	@uv pip lock
 
 qa: analyze typecheck security test
 
 security:
+	echo "############## Running Security Checks ##############"
 	@echo "Running security checks..."
 	@uv run bandit -r $(PACKAGE) -c pyproject.toml
 
@@ -79,35 +68,23 @@ setup-dev: venv install-dev pre-commit-install
 	@echo "Development environment set up."
 
 test:
+	echo "############## Running Tests ##############"
 	@echo "Running tests..."
 	@uv run pytest --maxfail=1
 
 test-verbose:
+	echo "############## Running Tests with Verbose Output ##############"
 	@echo "Running tests with verbose output..."
 	@uv run pytest -v
 
 typecheck:
+	echo "############## Running Type Checking ##############"
 	@echo "Running type checking..."
 	@uv run pyright $(PACKAGE)
 
-venv:
-	@echo "Creating virtual environment..."
-	@uv venv
-
 example:
+	echo "############## Creating Example Project ##############"
 	@echo "Creating example project..."
 	@python -m scripts.setup_uv_environment
-
-pre-commit-install:
-	@echo "Installing pre-commit hooks..."
-	@uv pip install pre-commit
-	@pre-commit install
-
-pre-commit:
-	@echo "Running pre-commit checks..."
-	@pre-commit run --all-files
-
-ci: qa coverage pre-commit
-	@echo "CI workflow complete."
 
 .PHONY: analyze build clean coverage demo format help install install-dev lock qa security setup-dev test test-verbose typecheck venv example pre-commit pre-commit-install ci

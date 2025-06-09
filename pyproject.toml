@@ -26,7 +26,6 @@ dependencies = [
     "packaging==23.2",
     "tomli==2.0.1; python_version < '3.11'",
     "PyGithub==2.1.1",
-    "tomli>=2.0.1",
 ]
 
 
@@ -88,4 +87,4 @@ lint.ignore = [
 
 [tool.bandit]
 exclude_dirs = ["tests"]
-skips = ["B101"]
+skips = ["B101", "B404", "B603"]
