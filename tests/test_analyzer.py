@@ -1,4 +1,5 @@
 """Tests for the analyzer module of dependapy"""
+
 import os
 import tempfile
 from pathlib import Path
@@ -22,17 +23,17 @@ def test_parse_dependency_version():
     package, version = parse_dependency_version('"requests>=2.25.0"')
     assert package == "requests"
     assert version == "2.25.0"
-    
+
     # Test with unquoted format
     package, version = parse_dependency_version("requests>=2.25.0")
     assert package == "requests"
     assert version == "2.25.0"
-    
+
     # Test with == format
     package, version = parse_dependency_version("requests==2.25.0")
     assert package == "requests"
     assert version == "2.25.0"
-    
+
     # Test without version
     package, version = parse_dependency_version("requests")
     assert package == "requests"
@@ -61,7 +62,7 @@ def test_get_latest_python_versions(mock_get):
     ]
     mock_response.raise_for_status.return_value = None
     mock_get.return_value = mock_response
-    
+
     versions = get_latest_python_versions()
     assert versions == ["3.12", "3.11", "3.10"]
     mock_get.assert_called_with("https://endoflife.date/api/python.json")
@@ -76,11 +77,11 @@ def test_get_latest_version(mock_get):
     mock_response.status_code = 200
     mock_response.raise_for_status.return_value = None
     mock_get.return_value = mock_response
-    
+
     version = get_latest_version("requests")
     assert version == "2.31.0"
     mock_get.assert_called_with("https://pypi.org/pypi/requests/json", timeout=10)
-    
+
     # Test caching
     version = get_latest_version("requests")
     assert version == "2.31.0"
@@ -107,37 +108,44 @@ dependencies = [
     "packaging>=23.0",
 ]
             """)
-        
+
         # Mock the latest Python versions and get_latest_version function
         with mock.patch("dependapy.analyzer.get_latest_python_versions") as mock_py_versions:
             with mock.patch("dependapy.analyzer.get_latest_version") as mock_get_version:
                 mock_py_versions.return_value = ["3.12", "3.11", "3.10"]
-                mock_get_version.side_effect = lambda pkg: {"requests": "2.31.0", "packaging": "23.2"}[pkg]
-                
+                mock_get_version.side_effect = lambda pkg: {
+                    "requests": "2.31.0",
+                    "packaging": "23.2",
+                }[pkg]
+
                 result = scan_file(test_file, ["3.12", "3.11", "3.10"])
-                
+
                 # Should require Python version update
                 assert result.python_update is not None
                 assert result.python_update.current_constraint == ">=3.8"
                 assert result.python_update.recommended_constraint == ">=3.10"
-                
+
                 # Should have two package updates
                 assert len(result.package_updates) == 2
-                assert any(update.package_name == "requests" and 
-                         update.current_version == "2.25.0" and 
-                         update.latest_version == "2.31.0" 
-                         for update in result.package_updates)
-                assert any(update.package_name == "packaging" and 
-                         update.current_version == "23.0" and 
-                         update.latest_version == "23.2" 
-                         for update in result.package_updates)
+                assert any(
+                    update.package_name == "requests"
+                    and update.current_version == "2.25.0"
+                    and update.latest_version == "2.31.0"
+                    for update in result.package_updates
+                )
+                assert any(
+                    update.package_name == "packaging"
+                    and update.current_version == "23.0"
+                    and update.latest_version == "23.2"
+                    for update in result.package_updates
+                )
 
 
 def test_scan_repository():
     """Test scanning a repository with mock pyproject.toml files"""
     with tempfile.TemporaryDirectory() as tmpdir:
         repo_path = Path(tmpdir)
-        
+
         # Create a few pyproject.toml files in different directories
         (repo_path / "project1").mkdir()
         with open(repo_path / "project1" / "pyproject.toml", "w") as f:
@@ -148,7 +156,7 @@ version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = ["requests>=2.31.0"]
             """)
-        
+
         (repo_path / "project2").mkdir()
         with open(repo_path / "project2" / "pyproject.toml", "w") as f:
             f.write("""
@@ -158,14 +166,18 @@ version = "0.1.0"
 requires-python = ">=3.8"
 dependencies = ["requests>=2.25.0"]
             """)
-        
+
         # Mock functions
         with mock.patch("dependapy.analyzer.get_latest_python_versions") as mock_py_versions:
             with mock.patch("dependapy.analyzer.scan_file") as mock_scan:
                 mock_py_versions.return_value = ["3.12", "3.11", "3.10"]
-                
+
                 # Mock only project2 needing updates
-                mock_scan.side_effect = lambda file_path, versions: None if "project1" in str(file_path) else mock.MagicMock()
-                
+                mock_scan.side_effect = (
+                    lambda file_path, versions: None
+                    if "project1" in str(file_path)
+                    else mock.MagicMock()
+                )
+
                 results = scan_repository(repo_path)
                 assert len(results) == 1  # Only project2 should need updates

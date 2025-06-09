@@ -2,6 +2,7 @@
 """
 Simple test script to verify dependapy functionality
 """
+
 import os
 import tempfile
 import shutil
@@ -14,7 +15,7 @@ print(f"Created temporary test directory at: {temp_dir}")
 try:
     # Create a fake pyproject.toml file with outdated dependencies
     test_file_path = Path(temp_dir) / "pyproject.toml"
-    
+
     with open(test_file_path, "w") as f:
         f.write("""
 [build-system]
@@ -38,23 +39,23 @@ dev = [
     "pytest>=6.0.0",
 ]
 """)
-    
+
     print(f"Created test pyproject.toml file at: {test_file_path}")
     print("\nRunning dependapy with --no-pr flag...\n")
-    
+
     # Run dependapy in the temp directory with --no-pr flag
     os.system(f"python -m dependapy.main --repo-path {temp_dir} --no-pr")
-    
+
     # Read and print the updated file
     print("\nChecking for updates in the pyproject.toml file...")
     with open(test_file_path, "r") as f:
         updated_content = f.read()
-    
+
     print("\nUpdated pyproject.toml content:")
     print("=" * 50)
     print(updated_content)
     print("=" * 50)
-    
+
 finally:
     # Clean up
     shutil.rmtree(temp_dir)

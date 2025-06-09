@@ -1,6 +1,7 @@
 """
 Analyzer module for scanning pyproject.toml files and checking for updates
 """
+
 import logging
 import sys
 from dataclasses import dataclass
@@ -17,6 +18,7 @@ from packaging.version import Version, parse
 
 logger = logging.getLogger("dependapy.analyzer")
 
+
 # Get the three latest Python minor versions
 def get_latest_python_versions() -> List[str]:
     """Get the three latest Python 3.x minor versions"""
@@ -24,11 +26,11 @@ def get_latest_python_versions() -> List[str]:
         response = requests.get("https://endoflife.date/api/python.json")
         response.raise_for_status()
         python_versions = response.json()
-        
+
         # Filter for Python 3.x versions and sort
         py3_versions = [v["cycle"] for v in python_versions if v["cycle"].startswith("3.")]
         py3_versions.sort(key=lambda x: parse(x), reverse=True)
-        
+
         # Get the three latest minor versions
         latest_versions = py3_versions[:3]
         logger.info(f"Latest Python versions: {', '.join(latest_versions)}")
@@ -38,21 +40,23 @@ def get_latest_python_versions() -> List[str]:
         # Fallback to hard-coded versions if API fails
         return ["3.12", "3.11", "3.10"]
 
+
 # Cache for PyPI package versions to avoid repeated requests
 _PYPI_CACHE: Dict[str, Optional[str]] = {}
+
 
 def get_latest_version(package_name: str) -> Optional[str]:
     """Get the latest version of a package from PyPI"""
     if package_name in _PYPI_CACHE:
         return _PYPI_CACHE[package_name]
-    
+
     try:
         response = requests.get(f"https://pypi.org/pypi/{package_name}/json", timeout=10)
         if response.status_code == 404:
             logger.warning(f"Package {package_name} not found on PyPI")
             _PYPI_CACHE[package_name] = None
             return None
-        
+
         response.raise_for_status()
         data = response.json()
         latest_version = data["info"]["version"]
@@ -63,14 +67,15 @@ def get_latest_version(package_name: str) -> Optional[str]:
         _PYPI_CACHE[package_name] = None
         return None
 
+
 def parse_dependency_version(dependency_spec: str) -> Tuple[str, str]:
     """Parse package and version from a dependency specifier"""
     if dependency_spec.startswith('"') and dependency_spec.endswith('"'):
         dependency_spec = dependency_spec[1:-1]
-    
+
     parts = dependency_spec.split()
     package = parts[0]
-    
+
     # Handle different version specifier formats
     version = ""
     if len(parts) > 1:
@@ -78,47 +83,54 @@ def parse_dependency_version(dependency_spec: str) -> Tuple[str, str]:
         # Handle ">=x.y.z" format
         if version.startswith(">=") or version.startswith("=="):
             version = version[2:]
-    
+
     return package, version
+
 
 @dataclass
 class UpdateInfo:
     """Information about a package that needs an update"""
+
     package_name: str
     current_version: str
     latest_version: str
     file_path: Path
 
+
 @dataclass
 class PythonVersionUpdateInfo:
     """Information about Python version that needs an update"""
+
     current_constraint: str
     recommended_constraint: str
     file_path: Path
 
+
 @dataclass
 class FileAnalysisResult:
     """Result of analyzing a pyproject.toml file"""
+
     file_path: Path
     package_updates: List[UpdateInfo]
     python_update: Optional[PythonVersionUpdateInfo] = None
 
+
 def scan_file(file_path: Path, latest_python_versions: List[str]) -> Optional[FileAnalysisResult]:
     """Scan a single pyproject.toml file for updates"""
     logger.info(f"Analyzing {file_path}")
-    
+
     try:
         with open(file_path, "rb") as f:
             pyproject = tomllib.load(f)
     except Exception as e:
         logger.error(f"Failed to parse {file_path}: {e}")
         return None
-    
+
     project_section = pyproject.get("project", {})
     if not project_section:
         logger.warning(f"No [project] section in {file_path}, skipping")
         return None
-    
+
     # Check Python version constraint
     python_update = None
     requires_python = project_section.get("requires-python")
@@ -131,54 +143,55 @@ def scan_file(file_path: Path, latest_python_versions: List[str]) -> Optional[Fi
             python_update = PythonVersionUpdateInfo(
                 current_constraint=requires_python,
                 recommended_constraint=recommended,
-                file_path=file_path
+                file_path=file_path,
             )
-            logger.info(f"Python version update needed in {file_path}: {requires_python} -> {recommended}")
-    
+            logger.info(
+                f"Python version update needed in {file_path}: {requires_python} -> {recommended}"
+            )
+
     # Check dependencies
     dependencies = project_section.get("dependencies", [])
     optional_deps = project_section.get("optional-dependencies", {})
-    
+
     all_deps = []
     # Process main dependencies
     for dep in dependencies:
         all_deps.append(dep)
-    
+
     # Process optional dependencies
     for group, deps in optional_deps.items():
         for dep in deps:
             all_deps.append(dep)
-    
+
     # Check for updates
     package_updates = []
     for dep in all_deps:
         package_name, current_version = parse_dependency_version(dep)
         if not current_version:  # Skip if we couldn't extract a version
             continue
-            
+
         latest_version = get_latest_version(package_name)
         if not latest_version:
             continue
-            
+
         if parse(latest_version) > parse(current_version):
             update = UpdateInfo(
                 package_name=package_name,
                 current_version=current_version,
                 latest_version=latest_version,
-                file_path=file_path
+                file_path=file_path,
             )
             package_updates.append(update)
             logger.info(f"Update needed for {package_name}: {current_version} -> {latest_version}")
-    
+
     if not package_updates and not python_update:
         logger.info(f"No updates needed for {file_path}")
         return None
-        
+
     return FileAnalysisResult(
-        file_path=file_path,
-        package_updates=package_updates,
-        python_update=python_update
+        file_path=file_path, package_updates=package_updates, python_update=python_update
     )
+
 
 def get_min_python_version(requires_python: str) -> Optional[str]:
     """Extract minimum Python version from requires-python constraint"""
@@ -192,18 +205,19 @@ def get_min_python_version(requires_python: str) -> Optional[str]:
                 return f"{parts[0]}.{parts[1]}"
     return None
 
+
 def scan_repository(repo_path: Path) -> List[FileAnalysisResult]:
     """Scan repository for pyproject.toml files and analyze them"""
     latest_python_versions = get_latest_python_versions()
-    
+
     # Find all pyproject.toml files recursively
     pyproject_files = list(repo_path.glob("**/pyproject.toml"))
     logger.info(f"Found {len(pyproject_files)} pyproject.toml files")
-    
+
     results = []
     for file_path in pyproject_files:
         result = scan_file(file_path, latest_python_versions)
         if result:
             results.append(result)
-    
+
     return results

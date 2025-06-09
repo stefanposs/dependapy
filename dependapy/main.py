@@ -2,6 +2,7 @@
 """
 dependapy - A custom dependabot alternative for Python projects
 """
+
 import os
 import sys
 import argparse
@@ -20,23 +21,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger("dependapy")
 
+
 def main():
     """Main entry point for dependapy"""
     parser = argparse.ArgumentParser(description="Analyze and update Python dependencies")
     parser.add_argument(
-        "--repo-path", 
+        "--repo-path",
         default=os.getcwd(),
-        help="Path to the repository to scan (default: current directory)"
+        help="Path to the repository to scan (default: current directory)",
     )
     parser.add_argument(
-        "--token", 
+        "--token",
         default=os.environ.get("GITHUB_TOKEN"),
-        help="GitHub token (default: from GITHUB_TOKEN environment variable)"
+        help="GitHub token (default: from GITHUB_TOKEN environment variable)",
     )
     parser.add_argument(
-        "--no-pr", 
-        action="store_true", 
-        help="Don't create or update pull requests, just show what would be updated"
+        "--no-pr",
+        action="store_true",
+        help="Don't create or update pull requests, just show what would be updated",
     )
     args = parser.parse_args()
 
@@ -54,18 +56,18 @@ def main():
     if not update_results:
         logger.info("No updates were made.")
         return 0
-    
+
     # Step 3: Create or update a pull request if changes were made
     if not args.no_pr and args.token:
         today = datetime.now().strftime("%Y-%m-%d")
         branch_name = f"dependapy/update-{today}"
-        
+
         try:
             pr_url = create_or_update_pull_request(
                 repo_path=repo_path,
                 branch_name=branch_name,
                 updated_files=[result.file_path for result in update_results],
-                github_token=args.token
+                github_token=args.token,
             )
             logger.info(f"Pull request created or updated: {pr_url}")
         except Exception as e:
@@ -73,8 +75,9 @@ def main():
             return 1
     elif not args.token and not args.no_pr:
         logger.warning("GitHub token not provided. Skipping pull request creation.")
-    
+
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())
