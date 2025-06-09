@@ -1,0 +1,43 @@
+name: Dependapy
+
+on:
+  schedule:
+    # Run every Sunday at 02:00 UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  update-dependencies:
+    name: Update Dependencies
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # Needed to push code changes
+      pull-requests: write  # Needed to create pull requests
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for git operations
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          uv pip install --system .
+
+      - name: Run dependapy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python -m dependapy.main

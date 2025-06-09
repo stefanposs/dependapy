@@ -1,0 +1,83 @@
+[project]
+name = "dependapy"
+version = "0.1.0"
+description = "A custom dependabot alternative for Python projects"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [
+    {name = "stefanposs", email = "hello@stefanposs.com"},
+]
+keywords = ["dependencies", "update", "dependabot"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Version Control",
+]
+
+dependencies = [
+    "requests==2.31.0",
+    "packaging==23.2",
+    "tomli==2.0.1; python_version < '3.11'",
+    "PyGithub==2.1.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==7.4.0",
+    "pytest-mock==3.11.0",
+    "ruff==0.3.2",
+    "pyright==1.1.354",
+    "bandit==1.7.5",
+    "pytest-cov==4.1.0",
+]
+test = [
+    "pytest>=7.4.0",
+    "pytest-mock>=3.11.0",
+    "pytest-cov>=4.1.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+dependapy = "dependapy.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["dependapy"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "N",   # pep8-naming
+    "SIM", # flake8-simplify
+    "A",   # flake8-builtins
+]
+ignore = ["E203"]
+
+[tool.ruff.isort]
+known-first-party = ["dependapy"]
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B101"]
+
+[tool.pyright]
+include = ["dependapy"]
+exclude = ["**/node_modules", "**/__pycache__", "tests"]
+reportMissingImports = true
+reportMissingTypeStubs = false
