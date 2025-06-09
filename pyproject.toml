@@ -24,7 +24,7 @@ classifiers = [
 dependencies = [
     "requests==2.31.0",
     "packaging==23.2",
-    "tomli==2.0.1; python_version < '3.11'",
+    "tomli==2.0.1",
     "PyGithub==2.1.1",
 ]
 
@@ -88,3 +88,10 @@ lint.ignore = [
 [tool.bandit]
 exclude_dirs = ["tests"]
 skips = ["B101", "B404", "B603", "B607"]
+
+[tool.pyright]
+include = ["dependapy"]
+exclude = ["tests"]
+typeCheckingMode = "basic"
+stubPath = "typings"
+reportMissingImports = true

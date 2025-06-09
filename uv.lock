@@ -282,7 +282,7 @@ dependencies = [
     { name = "packaging" },
     { name = "pygithub" },
     { name = "requests" },
-    { name = "tomli", marker = "python_full_version < '3.11'" },
+    { name = "tomli" },
 ]
 
 [package.dev-dependencies]
@@ -300,7 +300,7 @@ requires-dist = [
     { name = "packaging", specifier = "==23.2" },
     { name = "pygithub", specifier = "==2.1.1" },
     { name = "requests", specifier = "==2.31.0" },
-    { name = "tomli", marker = "python_full_version < '3.11'", specifier = "==2.0.1" },
+    { name = "tomli", specifier = "==2.0.1" },
 ]
 
 [package.metadata.requires-dev]
