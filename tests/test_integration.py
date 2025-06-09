@@ -100,8 +100,8 @@ def test_full_workflow_without_pr(mock_get_version, mock_py_versions, sample_rep
 @mock.patch("dependapy.github_api.create_pr_with_pygithub")
 def test_full_workflow_with_pr_mock(
     mock_create_pr,
-    mock_get_version, 
-    mock_py_versions, 
+    mock_get_version,
+    mock_py_versions,
     sample_repo,
 ):
     """Test the full workflow with PR creation using mocks"""

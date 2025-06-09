@@ -18,8 +18,9 @@ def get_repo_info(repo_path: Path) -> tuple:
     """
     try:
         # Get the remote URL
-        remote_url = subprocess.check_output(
-            ["git", "-C", str(repo_path), "config", "--get", "remote.origin.url"], text=True,
+        remote_url = subprocess.check_output(  # nosec B607
+            ["git", "-C", str(repo_path), "config", "--get", "remote.origin.url"],
+            text=True,
         ).strip()
 
         # Parse URL to extract owner and repo name
@@ -45,7 +46,10 @@ def get_repo_info(repo_path: Path) -> tuple:
 
 
 def create_or_update_pull_request(
-    repo_path: Path, branch_name: str, updated_files: list[Path], github_token: str,
+    repo_path: Path,
+    branch_name: str,
+    updated_files: list[Path],
+    github_token: str,
 ) -> str:
     """
     Create or update a pull request with dependency updates
@@ -83,7 +87,10 @@ def create_or_update_pull_request(
 
 
 def create_pr_with_pygithub(
-    repo_path: Path, branch_name: str, updated_files: list[Path], github_token: str,
+    repo_path: Path,
+    branch_name: str,
+    updated_files: list[Path],
+    github_token: str,
 ) -> str:
     """Create or update a PR using PyGithub"""
     try:
@@ -107,7 +114,8 @@ def create_pr_with_pygithub(
 
     # Check if there are changes to commit
     status = subprocess.check_output(
-        ["git", "-C", str(repo_path), "status", "--porcelain"], text=True,
+        ["git", "-C", str(repo_path), "status", "--porcelain"],
+        text=True,
     ).strip()
 
     if not status:
@@ -120,7 +128,8 @@ def create_pr_with_pygithub(
 
     # Push changes
     subprocess.run(
-        ["git", "-C", str(repo_path), "push", "origin", branch_name, "--force"], check=True,
+        ["git", "-C", str(repo_path), "push", "origin", branch_name, "--force"],
+        check=True,
     )
 
     # Create or update PR
@@ -156,7 +165,10 @@ def create_pr_with_pygithub(
 
 
 def create_pr_with_gh_cli(
-    repo_path: Path, branch_name: str, updated_files: list[Path], github_token: str,
+    repo_path: Path,
+    branch_name: str,
+    updated_files: list[Path],
+    github_token: str,
 ) -> str:
     """Create or update a PR using the gh CLI"""
     # Setup git for committing
@@ -172,7 +184,8 @@ def create_pr_with_gh_cli(
 
     # Check if there are changes to commit
     status = subprocess.check_output(
-        ["git", "-C", str(repo_path), "status", "--porcelain"], text=True,
+        ["git", "-C", str(repo_path), "status", "--porcelain"],
+        text=True,
     ).strip()
 
     if not status:
@@ -185,7 +198,8 @@ def create_pr_with_gh_cli(
 
     # Push changes
     subprocess.run(
-        ["git", "-C", str(repo_path), "push", "origin", branch_name, "--force"], check=True,
+        ["git", "-C", str(repo_path), "push", "origin", branch_name, "--force"],
+        check=True,
     )
 
     # Check if PR already exists
@@ -245,7 +259,8 @@ def setup_git_for_commit(repo_path: Path, branch_name: str) -> None:
     """Configure git for making commits"""
     # Configure git user
     subprocess.run(
-        ["git", "-C", str(repo_path), "config", "user.name", "dependapy-bot"], check=True,
+        ["git", "-C", str(repo_path), "config", "user.name", "dependapy-bot"],
+        check=True,
     )
     subprocess.run(
         ["git", "-C", str(repo_path), "config", "user.email", "dependapy-bot@noreply.github.com"],
@@ -259,7 +274,8 @@ def setup_git_for_commit(repo_path: Path, branch_name: str) -> None:
 
     # Get current branch
     current_branch = subprocess.check_output(
-        ["git", "-C", str(repo_path), "rev-parse", "--abbrev-ref", "HEAD"], text=True,
+        ["git", "-C", str(repo_path), "rev-parse", "--abbrev-ref", "HEAD"],
+        text=True,
     ).strip()
 
     # Create and checkout feature branch

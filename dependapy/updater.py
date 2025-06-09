@@ -56,13 +56,14 @@ def update_dependencies(analysis_results: list[FileAnalysisResult]) -> list[Upda
             # Pattern to match the current version while preserving indentation and format
             # We need to ensure we only update the correct dependency
             pattern = (
-                f'(["\']?{re.escape(package_name)}["\']?\\s*(?:>=|==)\\s*)'
-                f'["\']?{re.escape(current_version)}["\']?'
+                f"([\"']?{re.escape(package_name)}[\"']?\\s*(?:>=|==)\\s*)"
+                f"[\"']?{re.escape(current_version)}[\"']?"
             )
 
             # Replace with the new version, preserving the capture group
             def get_replacement(match, version=new_version) -> str:
                 return f"{match.group(1)}{version}"
+
             content = re.sub(pattern, get_replacement, content)
 
             logger.info("Updated %s: %s -> %s", package_name, current_version, new_version)

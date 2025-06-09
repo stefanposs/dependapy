@@ -87,4 +87,4 @@ example:
 	@echo "Creating example project..."
 	@python -m scripts.setup_uv_environment
 
-.PHONY: analyze build clean coverage demo format help install install-dev lock qa security setup-dev test test-verbose typecheck venv example pre-commit pre-commit-install ci
+.PHONY: format analyze typecheck security test coverage clean 

@@ -176,9 +176,7 @@ dependencies = ["requests>=2.25.0"]
 
                 # Mock only project2 needing updates
                 mock_scan.side_effect = (
-                    lambda file_path, _: None
-                    if "project1" in str(file_path)
-                    else mock.MagicMock()
+                    lambda file_path, _: None if "project1" in str(file_path) else mock.MagicMock()
                 )
 
                 results = scan_repository(repo_path)
