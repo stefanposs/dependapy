@@ -24,14 +24,27 @@ build-backend = "hatchling.build"
 [project]
 name = "sample-project"
 version = "0.1.0"
-description = "A sample project"
+description = "A sample project with outdated dependencies"
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
     "requests>=2.25.0",
     "packaging>=23.0",
+    "fastapi>=0.95.0",
+    "sqlalchemy>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0", 
+    "black>=23.1.0",
 ]
             """)
+        
+        # Create README.md
+        readme_path = project_dir / "README.md"
+        with open(readme_path, "w") as f:
+            f.write("# Sample Project\n\nA test project for demonstrating dependapy with uv.")
         
         # Initialize git repo
         subprocess.run(["git", "init"], cwd=project_dir, check=True)
@@ -44,32 +57,3 @@ dependencies = [
         print(f"You can now run: cd {project_dir} && python -m dependapy.main --no-pr")
         
         return project_dir
-
-
-def run_dependapy(project_path):
-    """Run dependapy on the sample project"""
-    print("Running dependapy with --no-pr flag...")
-    result = subprocess.run(
-        ["python", "-m", "dependapy.main", "--no-pr"],
-        cwd=project_path,
-        capture_output=True,
-        text=True
-    )
-    
-    print("\nOutput:")
-    print(result.stdout)
-    
-    if result.stderr:
-        print("\nErrors:")
-        print(result.stderr)
-    
-    # Check if the pyproject.toml file was modified
-    with open(project_path / "pyproject.toml", "r") as f:
-        content = f.read()
-        print("\nUpdated pyproject.toml:")
-        print(content)
-
-
-if __name__ == "__main__":
-    project_path = create_sample_project()
-    run_dependapy(project_path)

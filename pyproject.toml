@@ -28,7 +28,8 @@ dependencies = [
     "PyGithub==2.1.1",
 ]
 
-[project.optional-dependencies]
+
+[dependency-groups]
 dev = [
     "pytest==7.4.0",
     "pytest-mock==3.11.0",
@@ -36,11 +37,6 @@ dev = [
     "pyright==1.1.354",
     "bandit==1.7.5",
     "pytest-cov==4.1.0",
-]
-test = [
-    "pytest>=7.4.0",
-    "pytest-mock>=3.11.0",
-    "pytest-cov>=4.1.0",
 ]
 
 [build-system]
@@ -81,3 +77,4 @@ include = ["dependapy"]
 exclude = ["**/node_modules", "**/__pycache__", "tests"]
 reportMissingImports = true
 reportMissingTypeStubs = false
+
