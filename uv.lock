@@ -281,7 +281,7 @@ dependencies = [
     { name = "tomli", marker = "python_full_version < '3.11'" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "bandit" },
     { name = "pyright" },
@@ -290,37 +290,24 @@ dev = [
     { name = "pytest-mock" },
     { name = "ruff" },
 ]
-test = [
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-mock" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "ruff" },
-]
 
 [package.metadata]
 requires-dist = [
-    { name = "bandit", marker = "extra == 'dev'", specifier = "==1.7.5" },
     { name = "packaging", specifier = "==23.2" },
     { name = "pygithub", specifier = "==2.1.1" },
-    { name = "pyright", marker = "extra == 'dev'", specifier = "==1.1.354" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = "==7.4.0" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=7.4.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = "==4.1.0" },
-    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=4.1.0" },
-    { name = "pytest-mock", marker = "extra == 'dev'", specifier = "==3.11.0" },
-    { name = "pytest-mock", marker = "extra == 'test'", specifier = ">=3.11.0" },
     { name = "requests", specifier = "==2.31.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = "==0.3.2" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = "==2.0.1" },
 ]
-provides-extras = ["dev", "test"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "ruff", specifier = ">=0.3.2" }]
+dev = [
+    { name = "bandit", specifier = "==1.7.5" },
+    { name = "pyright", specifier = "==1.1.354" },
+    { name = "pytest", specifier = "==7.4.0" },
+    { name = "pytest-cov", specifier = "==4.1.0" },
+    { name = "pytest-mock", specifier = "==3.11.0" },
+    { name = "ruff", specifier = "==0.3.2" },
+]
 
 [[package]]
 name = "deprecated"
