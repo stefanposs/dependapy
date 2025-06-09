@@ -3,10 +3,8 @@ Analyzer module for scanning pyproject.toml files and checking for updates
 """
 
 import logging
-import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 
 try:
     import tomllib  # Python 3.11+
@@ -14,16 +12,16 @@ except ImportError:
     import tomli as tomllib
 
 import requests
-from packaging.version import Version, parse
+from packaging.version import parse
 
 logger = logging.getLogger("dependapy.analyzer")
 
 
 # Get the three latest Python minor versions
-def get_latest_python_versions() -> List[str]:
+def get_latest_python_versions() -> list[str]:
     """Get the three latest Python 3.x minor versions"""
     try:
-        response = requests.get("https://endoflife.date/api/python.json")
+        response = requests.get("https://endoflife.date/api/python.json", timeout=10)
         response.raise_for_status()
         python_versions = response.json()
 
@@ -33,19 +31,20 @@ def get_latest_python_versions() -> List[str]:
 
         # Get the three latest minor versions
         latest_versions = py3_versions[:3]
-        logger.info(f"Latest Python versions: {', '.join(latest_versions)}")
-        return latest_versions
-    except Exception as e:
-        logger.error(f"Failed to get latest Python versions: {e}")
+        logger.info("Latest Python versions: %s", ", ".join(latest_versions))
+    except Exception:
+        logger.exception("Failed to get latest Python versions")
         # Fallback to hard-coded versions if API fails
         return ["3.12", "3.11", "3.10"]
+    else:
+        return latest_versions
 
 
 # Cache for PyPI package versions to avoid repeated requests
-_PYPI_CACHE: Dict[str, Optional[str]] = {}
+_PYPI_CACHE: dict[str, str | None] = {}
 
 
-def get_latest_version(package_name: str) -> Optional[str]:
+def get_latest_version(package_name: str) -> str | None:
     """Get the latest version of a package from PyPI"""
     if package_name in _PYPI_CACHE:
         return _PYPI_CACHE[package_name]
@@ -53,7 +52,7 @@ def get_latest_version(package_name: str) -> Optional[str]:
     try:
         response = requests.get(f"https://pypi.org/pypi/{package_name}/json", timeout=10)
         if response.status_code == 404:
-            logger.warning(f"Package {package_name} not found on PyPI")
+            logger.warning("Package %s not found on PyPI", package_name)
             _PYPI_CACHE[package_name] = None
             return None
 
@@ -61,28 +60,33 @@ def get_latest_version(package_name: str) -> Optional[str]:
         data = response.json()
         latest_version = data["info"]["version"]
         _PYPI_CACHE[package_name] = latest_version
-        return latest_version
-    except Exception as e:
-        logger.error(f"Error fetching version for {package_name}: {e}")
+    except Exception:
+        logger.exception("Error fetching version for %s", package_name)
         _PYPI_CACHE[package_name] = None
         return None
+    else:
+        return latest_version
 
 
-def parse_dependency_version(dependency_spec: str) -> Tuple[str, str]:
+def parse_dependency_version(dependency_spec: str) -> tuple[str, str]:
     """Parse package and version from a dependency specifier"""
+    # Remove quotes if present
     if dependency_spec.startswith('"') and dependency_spec.endswith('"'):
         dependency_spec = dependency_spec[1:-1]
 
-    parts = dependency_spec.split()
-    package = parts[0]
-
-    # Handle different version specifier formats
-    version = ""
-    if len(parts) > 1:
-        version = parts[1].strip("()")
-        # Handle ">=x.y.z" format
-        if version.startswith(">=") or version.startswith("=="):
-            version = version[2:]
+    # Check for version specifiers
+    if ">=" in dependency_spec:
+        parts = dependency_spec.split(">=")
+        package = parts[0].strip()
+        version = parts[1].strip()
+    elif "==" in dependency_spec:
+        parts = dependency_spec.split("==")
+        package = parts[0].strip()
+        version = parts[1].strip()
+    else:
+        # No version specifier found
+        package = dependency_spec.strip()
+        version = ""
 
     return package, version
 
@@ -111,24 +115,24 @@ class FileAnalysisResult:
     """Result of analyzing a pyproject.toml file"""
 
     file_path: Path
-    package_updates: List[UpdateInfo]
-    python_update: Optional[PythonVersionUpdateInfo] = None
+    package_updates: list[UpdateInfo]
+    python_update: PythonVersionUpdateInfo | None = None
 
 
-def scan_file(file_path: Path, latest_python_versions: List[str]) -> Optional[FileAnalysisResult]:
+def scan_file(file_path: Path, latest_python_versions: list[str]) -> FileAnalysisResult | None:
     """Scan a single pyproject.toml file for updates"""
-    logger.info(f"Analyzing {file_path}")
+    logger.info("Analyzing %s", file_path)
 
     try:
-        with open(file_path, "rb") as f:
+        with file_path.open("rb") as f:
             pyproject = tomllib.load(f)
-    except Exception as e:
-        logger.error(f"Failed to parse {file_path}: {e}")
+    except Exception:
+        logger.exception("Failed to parse %s", file_path)
         return None
 
     project_section = pyproject.get("project", {})
     if not project_section:
-        logger.warning(f"No [project] section in {file_path}, skipping")
+        logger.warning("No [project] section in %s, skipping", file_path)
         return None
 
     # Check Python version constraint
@@ -146,22 +150,22 @@ def scan_file(file_path: Path, latest_python_versions: List[str]) -> Optional[Fi
                 file_path=file_path,
             )
             logger.info(
-                f"Python version update needed in {file_path}: {requires_python} -> {recommended}"
+                "Python version update needed in %s: %s -> %s",
+                file_path,
+                requires_python,
+                recommended,
             )
 
     # Check dependencies
     dependencies = project_section.get("dependencies", [])
     optional_deps = project_section.get("optional-dependencies", {})
 
-    all_deps = []
     # Process main dependencies
-    for dep in dependencies:
-        all_deps.append(dep)
+    all_deps = list(dependencies)
 
     # Process optional dependencies
-    for group, deps in optional_deps.items():
-        for dep in deps:
-            all_deps.append(dep)
+    for deps in optional_deps.values():
+        all_deps.extend(deps)
 
     # Check for updates
     package_updates = []
@@ -182,18 +186,25 @@ def scan_file(file_path: Path, latest_python_versions: List[str]) -> Optional[Fi
                 file_path=file_path,
             )
             package_updates.append(update)
-            logger.info(f"Update needed for {package_name}: {current_version} -> {latest_version}")
+            logger.info(
+                "Update needed for %s: %s -> %s",
+                package_name,
+                current_version,
+                latest_version,
+            )
 
     if not package_updates and not python_update:
-        logger.info(f"No updates needed for {file_path}")
+        logger.info("No updates needed for %s", file_path)
         return None
 
     return FileAnalysisResult(
-        file_path=file_path, package_updates=package_updates, python_update=python_update
+        file_path=file_path,
+        package_updates=package_updates,
+        python_update=python_update,
     )
 
 
-def get_min_python_version(requires_python: str) -> Optional[str]:
+def get_min_python_version(requires_python: str) -> str | None:
     """Extract minimum Python version from requires-python constraint"""
     # Handle common formats like ">=3.8", ">=3.8,<4.0", ">=3.8.0"
     if requires_python.startswith(">="):
@@ -206,13 +217,13 @@ def get_min_python_version(requires_python: str) -> Optional[str]:
     return None
 
 
-def scan_repository(repo_path: Path) -> List[FileAnalysisResult]:
+def scan_repository(repo_path: Path) -> list[FileAnalysisResult]:
     """Scan repository for pyproject.toml files and analyze them"""
     latest_python_versions = get_latest_python_versions()
 
     # Find all pyproject.toml files recursively
     pyproject_files = list(repo_path.glob("**/pyproject.toml"))
-    logger.info(f"Found {len(pyproject_files)} pyproject.toml files")
+    logger.info("Found %d pyproject.toml files", len(pyproject_files))
 
     results = []
     for file_path in pyproject_files:

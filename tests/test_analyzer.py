@@ -1,6 +1,5 @@
 """Tests for the analyzer module of dependapy"""
 
-import os
 import tempfile
 from pathlib import Path
 from unittest import mock
@@ -65,7 +64,7 @@ def test_get_latest_python_versions(mock_get):
 
     versions = get_latest_python_versions()
     assert versions == ["3.12", "3.11", "3.10"]
-    mock_get.assert_called_with("https://endoflife.date/api/python.json")
+    mock_get.assert_called_with("https://endoflife.date/api/python.json", timeout=10)
 
 
 @mock.patch("dependapy.analyzer.requests.get")
@@ -119,6 +118,9 @@ dependencies = [
                 }[pkg]
 
                 result = scan_file(test_file, ["3.12", "3.11", "3.10"])
+
+                # First ensure result is not None
+                assert result is not None, "scan_file returned None"
 
                 # Should require Python version update
                 assert result.python_update is not None
@@ -174,7 +176,7 @@ dependencies = ["requests>=2.25.0"]
 
                 # Mock only project2 needing updates
                 mock_scan.side_effect = (
-                    lambda file_path, versions: None
+                    lambda file_path, _: None
                     if "project1" in str(file_path)
                     else mock.MagicMock()
                 )

@@ -2,11 +2,11 @@
 GitHub API module for creating and updating pull requests
 """
 
+import importlib.util
 import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import List, Optional
 
 logger = logging.getLogger("dependapy.github_api")
 
@@ -19,7 +19,7 @@ def get_repo_info(repo_path: Path) -> tuple:
     try:
         # Get the remote URL
         remote_url = subprocess.check_output(
-            ["git", "-C", str(repo_path), "config", "--get", "remote.origin.url"], text=True
+            ["git", "-C", str(repo_path), "config", "--get", "remote.origin.url"], text=True,
         ).strip()
 
         # Parse URL to extract owner and repo name
@@ -38,14 +38,14 @@ def get_repo_info(repo_path: Path) -> tuple:
             parts = path.split("/")
             if len(parts) >= 2:
                 return parts[0], parts[1]
-    except Exception as e:
-        logger.error(f"Failed to get repository info: {e}")
+    except Exception:
+        logger.exception("Failed to get repository info")
 
     return None, None
 
 
 def create_or_update_pull_request(
-    repo_path: Path, branch_name: str, updated_files: List[Path], github_token: str
+    repo_path: Path, branch_name: str, updated_files: list[Path], github_token: str,
 ) -> str:
     """
     Create or update a pull request with dependency updates
@@ -56,15 +56,15 @@ def create_or_update_pull_request(
     """
     # First try using PyGithub
     try:
-        from github import Github, GithubException
-
-        logger.info("Using PyGithub for PR creation")
-        return create_pr_with_pygithub(
-            repo_path=repo_path,
-            branch_name=branch_name,
-            updated_files=updated_files,
-            github_token=github_token,
-        )
+        # Check if PyGithub is available
+        if importlib.util.find_spec("github") is not None:
+            logger.info("Using PyGithub for PR creation")
+            return create_pr_with_pygithub(
+                repo_path=repo_path,
+                branch_name=branch_name,
+                updated_files=updated_files,
+                github_token=github_token,
+            )
     except ImportError:
         logger.info("PyGithub not available, trying gh CLI")
 
@@ -76,21 +76,27 @@ def create_or_update_pull_request(
             updated_files=updated_files,
             github_token=github_token,
         )
-    except Exception as e:
-        logger.error(f"Failed to create PR with gh CLI: {e}")
-        raise RuntimeError("Could not create PR with either PyGithub or gh CLI") from e
+    except Exception as exc:
+        logger.exception("Failed to create PR with gh CLI")
+        error_message = "Could not create PR with either PyGithub or gh CLI"
+        raise RuntimeError(error_message) from exc
 
 
 def create_pr_with_pygithub(
-    repo_path: Path, branch_name: str, updated_files: List[Path], github_token: str
+    repo_path: Path, branch_name: str, updated_files: list[Path], github_token: str,
 ) -> str:
     """Create or update a PR using PyGithub"""
-    from github import Github, GithubException
+    try:
+        from github import Github
+    except ImportError as exc:
+        error_message = "PyGithub package is required but not installed"
+        raise ImportError(error_message) from exc
 
     # Get repository info
     owner, repo_name = get_repo_info(repo_path)
     if not owner or not repo_name:
-        raise ValueError("Could not determine repository owner and name")
+        error_message = "Could not determine repository owner and name"
+        raise ValueError(error_message)
 
     # Setup git for committing
     setup_git_for_commit(repo_path, branch_name)
@@ -101,7 +107,7 @@ def create_pr_with_pygithub(
 
     # Check if there are changes to commit
     status = subprocess.check_output(
-        ["git", "-C", str(repo_path), "status", "--porcelain"], text=True
+        ["git", "-C", str(repo_path), "status", "--porcelain"], text=True,
     ).strip()
 
     if not status:
@@ -114,7 +120,7 @@ def create_pr_with_pygithub(
 
     # Push changes
     subprocess.run(
-        ["git", "-C", str(repo_path), "push", "origin", branch_name, "--force"], check=True
+        ["git", "-C", str(repo_path), "push", "origin", branch_name, "--force"], check=True,
     )
 
     # Create or update PR
@@ -129,7 +135,7 @@ def create_pr_with_pygithub(
             break
 
     if existing_pr:
-        logger.info(f"Updating existing PR #{existing_pr.number}")
+        logger.info("Updating existing PR #%s", existing_pr.number)
         return existing_pr.html_url
     else:
         # Create new PR
@@ -145,12 +151,12 @@ def create_pr_with_pygithub(
             base="main",  # Assuming main is the default branch
             head=branch_name,
         )
-        logger.info(f"Created new PR #{new_pr.number}")
+        logger.info("Created new PR #%s", new_pr.number)
         return new_pr.html_url
 
 
 def create_pr_with_gh_cli(
-    repo_path: Path, branch_name: str, updated_files: List[Path], github_token: str
+    repo_path: Path, branch_name: str, updated_files: list[Path], github_token: str,
 ) -> str:
     """Create or update a PR using the gh CLI"""
     # Setup git for committing
@@ -166,7 +172,7 @@ def create_pr_with_gh_cli(
 
     # Check if there are changes to commit
     status = subprocess.check_output(
-        ["git", "-C", str(repo_path), "status", "--porcelain"], text=True
+        ["git", "-C", str(repo_path), "status", "--porcelain"], text=True,
     ).strip()
 
     if not status:
@@ -179,7 +185,7 @@ def create_pr_with_gh_cli(
 
     # Push changes
     subprocess.run(
-        ["git", "-C", str(repo_path), "push", "origin", branch_name, "--force"], check=True
+        ["git", "-C", str(repo_path), "push", "origin", branch_name, "--force"], check=True,
     )
 
     # Check if PR already exists
@@ -210,7 +216,7 @@ def create_pr_with_gh_cli(
         import json
 
         pr_url = json.loads(result.stdout)["url"]
-        logger.info(f"Existing PR updated: {pr_url}")
+        logger.info("Existing PR updated: %s", pr_url)
         return pr_url
     else:
         # Create new PR
@@ -231,7 +237,7 @@ def create_pr_with_gh_cli(
         )
 
         pr_url = result.stdout.strip()
-        logger.info(f"Created new PR: {pr_url}")
+        logger.info("Created new PR: %s", pr_url)
         return pr_url
 
 
@@ -239,7 +245,7 @@ def setup_git_for_commit(repo_path: Path, branch_name: str) -> None:
     """Configure git for making commits"""
     # Configure git user
     subprocess.run(
-        ["git", "-C", str(repo_path), "config", "user.name", "dependapy-bot"], check=True
+        ["git", "-C", str(repo_path), "config", "user.name", "dependapy-bot"], check=True,
     )
     subprocess.run(
         ["git", "-C", str(repo_path), "config", "user.email", "dependapy-bot@noreply.github.com"],
@@ -253,7 +259,7 @@ def setup_git_for_commit(repo_path: Path, branch_name: str) -> None:
 
     # Get current branch
     current_branch = subprocess.check_output(
-        ["git", "-C", str(repo_path), "rev-parse", "--abbrev-ref", "HEAD"], text=True
+        ["git", "-C", str(repo_path), "rev-parse", "--abbrev-ref", "HEAD"], text=True,
     ).strip()
 
     # Create and checkout feature branch

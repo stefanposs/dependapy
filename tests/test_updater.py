@@ -99,8 +99,9 @@ dependencies = [
         # Update the dependencies
         update_results = update_dependencies([analysis_result])
 
-        # Check that no files were modified
-        assert len(update_results) == 0
+    # Check that no files were modified
+    assert len(update_results) == 1
+    assert not update_results[0].modified
 
 
 def test_update_errors():

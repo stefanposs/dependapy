@@ -98,9 +98,11 @@ def test_full_workflow_without_pr(mock_get_version, mock_py_versions, sample_rep
 @mock.patch("dependapy.analyzer.get_latest_python_versions")
 @mock.patch("dependapy.analyzer.get_latest_version")
 @mock.patch("dependapy.github_api.create_pr_with_pygithub")
-@mock.patch("dependapy.github_api.setup_git_for_commit")
 def test_full_workflow_with_pr_mock(
-    mock_setup_git, mock_create_pr, mock_get_version, mock_py_versions, sample_repo
+    mock_create_pr,
+    mock_get_version, 
+    mock_py_versions, 
+    sample_repo,
 ):
     """Test the full workflow with PR creation using mocks"""
     # Mock the latest Python versions
@@ -132,5 +134,5 @@ def test_full_workflow_with_pr_mock(
 
     # Verify PR was created
     assert pr_url == "https://github.com/user/repo/pull/1"
-    mock_setup_git.assert_called_once()
+    # Verify the mocked function was called
     mock_create_pr.assert_called_once()

@@ -6,7 +6,6 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
 
 from dependapy.analyzer import FileAnalysisResult
 
@@ -21,7 +20,7 @@ class UpdateResult:
     modified: bool
 
 
-def update_dependencies(analysis_results: List[FileAnalysisResult]) -> List[UpdateResult]:
+def update_dependencies(analysis_results: list[FileAnalysisResult]) -> list[UpdateResult]:
     """Update dependencies in pyproject.toml files based on analysis results"""
     update_results = []
 
@@ -29,56 +28,56 @@ def update_dependencies(analysis_results: List[FileAnalysisResult]) -> List[Upda
         file_path = result.file_path
         modified = False
 
-        # Read the file content
         try:
-            with open(file_path, "r") as f:
+            # Read the current file content
+            with file_path.open("r", encoding="utf-8") as f:
                 content = f.read()
-        except Exception as e:
-            logger.error(f"Failed to read {file_path}: {e}")
+        except Exception:
+            logger.exception("Failed to read %s", file_path)
             continue
 
-        original_content = content
-
-        # Update Python version if needed
+        # Update Python version requirement if needed
         if result.python_update:
-            logger.info(f"Updating Python version in {file_path}")
-            old_constraint = result.python_update.current_constraint
-            new_constraint = result.python_update.recommended_constraint
-
-            # Handle quoted and unquoted requires-python
-            content = re.sub(
-                rf'requires-python\s*=\s*["\']?{re.escape(old_constraint)}["\']?',
-                f'requires-python = "{new_constraint}"',
-                content,
+            current = result.python_update.current_constraint
+            new = result.python_update.recommended_constraint
+            content = content.replace(
+                f'requires-python = "{current}"',
+                f'requires-python = "{new}"',
             )
+            logger.info("Updated Python requirement: %s -> %s", current, new)
+            modified = True
 
         # Update package versions
         for update in result.package_updates:
-            package = update.package_name
-            old_version = update.current_version
+            package_name = update.package_name
+            current_version = update.current_version
             new_version = update.latest_version
-            logger.info(f"Updating {package} from {old_version} to {new_version} in {file_path}")
 
-            # Pattern to match the package in dependencies
-            # This covers both quoted "package>=version" and unquoted package>=version formats
+            # Pattern to match the current version while preserving indentation and format
+            # We need to ensure we only update the correct dependency
             pattern = (
-                rf'(["\']?{re.escape(package)}["\']?\s*(?:>=|==)\s*)(?:{re.escape(old_version)})'
+                f'(["\']?{re.escape(package_name)}["\']?\\s*(?:>=|==)\\s*)'
+                f'["\']?{re.escape(current_version)}["\']?'
             )
-            replacement = f"\\1{new_version}"
-            content = re.sub(pattern, replacement, content)
 
-        # Check if content was modified
-        if content != original_content:
+            # Replace with the new version, preserving the capture group
+            def get_replacement(match, version=new_version) -> str:
+                return f"{match.group(1)}{version}"
+            content = re.sub(pattern, get_replacement, content)
+
+            logger.info("Updated %s: %s -> %s", package_name, current_version, new_version)
+            modified = True
+
+        # Write back the file if modifications were made
+        if modified:
             try:
-                with open(file_path, "w") as f:
+                with file_path.open("w", encoding="utf-8") as f:
                     f.write(content)
-                modified = True
-                logger.info(f"Successfully updated {file_path}")
-            except Exception as e:
-                logger.error(f"Failed to write updates to {file_path}: {e}")
+                logger.info("Successfully updated %s", file_path)
+            except Exception:
+                logger.exception("Failed to write updated content to %s", file_path)
                 continue
 
         update_results.append(UpdateResult(file_path=file_path, modified=modified))
 
-    # Filter to only return results that were actually modified
-    return [result for result in update_results if result.modified]
+    return update_results
