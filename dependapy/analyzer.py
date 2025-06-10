@@ -26,7 +26,9 @@ def get_latest_python_versions() -> list[str]:
         python_versions = response.json()
 
         # Filter for Python 3.x versions and sort
-        py3_versions = [v["cycle"] for v in python_versions if v["cycle"].startswith("3.")]
+        py3_versions = [
+            v["cycle"] for v in python_versions if v["cycle"].startswith("3.")
+        ]
         py3_versions.sort(key=lambda x: parse(x), reverse=True)
 
         # Get the three latest minor versions
@@ -50,7 +52,9 @@ def get_latest_version(package_name: str) -> str | None:
         return _PYPI_CACHE[package_name]
 
     try:
-        response = requests.get(f"https://pypi.org/pypi/{package_name}/json", timeout=10)
+        response = requests.get(
+            f"https://pypi.org/pypi/{package_name}/json", timeout=10
+        )
         if response.status_code == 404:
             logger.warning("Package %s not found on PyPI", package_name)
             _PYPI_CACHE[package_name] = None
@@ -119,7 +123,9 @@ class FileAnalysisResult:
     python_update: PythonVersionUpdateInfo | None = None
 
 
-def scan_file(file_path: Path, latest_python_versions: list[str]) -> FileAnalysisResult | None:
+def scan_file(
+    file_path: Path, latest_python_versions: list[str]
+) -> FileAnalysisResult | None:
     """Scan a single pyproject.toml file for updates"""
     logger.info("Analyzing %s", file_path)
 

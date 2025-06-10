@@ -20,7 +20,9 @@ class UpdateResult:
     modified: bool
 
 
-def update_dependencies(analysis_results: list[FileAnalysisResult]) -> list[UpdateResult]:
+def update_dependencies(
+    analysis_results: list[FileAnalysisResult],
+) -> list[UpdateResult]:
     """Update dependencies in pyproject.toml files based on analysis results"""
     update_results = []
 
@@ -66,7 +68,9 @@ def update_dependencies(analysis_results: list[FileAnalysisResult]) -> list[Upda
 
             content = re.sub(pattern, get_replacement, content)
 
-            logger.info("Updated %s: %s -> %s", package_name, current_version, new_version)
+            logger.info(
+                "Updated %s: %s -> %s", package_name, current_version, new_version
+            )
             modified = True
 
         # Write back the file if modifications were made

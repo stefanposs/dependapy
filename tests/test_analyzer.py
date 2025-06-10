@@ -4,8 +4,6 @@ import tempfile
 from pathlib import Path
 from unittest import mock
 
-import pytest
-
 from dependapy.analyzer import (
     get_latest_python_versions,
     get_latest_version,
@@ -109,8 +107,12 @@ dependencies = [
             """)
 
         # Mock the latest Python versions and get_latest_version function
-        with mock.patch("dependapy.analyzer.get_latest_python_versions") as mock_py_versions:
-            with mock.patch("dependapy.analyzer.get_latest_version") as mock_get_version:
+        with mock.patch(
+            "dependapy.analyzer.get_latest_python_versions"
+        ) as mock_py_versions:
+            with mock.patch(
+                "dependapy.analyzer.get_latest_version"
+            ) as mock_get_version:
                 mock_py_versions.return_value = ["3.12", "3.11", "3.10"]
                 mock_get_version.side_effect = lambda pkg: {
                     "requests": "2.31.0",
@@ -170,13 +172,17 @@ dependencies = ["requests>=2.25.0"]
             """)
 
         # Mock functions
-        with mock.patch("dependapy.analyzer.get_latest_python_versions") as mock_py_versions:
+        with mock.patch(
+            "dependapy.analyzer.get_latest_python_versions"
+        ) as mock_py_versions:
             with mock.patch("dependapy.analyzer.scan_file") as mock_scan:
                 mock_py_versions.return_value = ["3.12", "3.11", "3.10"]
 
                 # Mock only project2 needing updates
                 mock_scan.side_effect = (
-                    lambda file_path, _: None if "project1" in str(file_path) else mock.MagicMock()
+                    lambda file_path, _: None
+                    if "project1" in str(file_path)
+                    else mock.MagicMock()
                 )
 
                 results = scan_repository(repo_path)
