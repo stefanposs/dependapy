@@ -1,10 +1,9 @@
 # DEPENDAPY
 
-[![GitHub Actions](https://img.shields.io/github/actions/workflow/status/YOUR_USERNAME/dependapy/dependapy.yml?branch=main&label=CI)](https://github.com/YOUR_USERNAME/dependapy/actions)
+[![GitHub Actions](https://img.shields.io/github/actions/workflow/status/stefanposs/dependapy/qa.yml?branch=main&label=CI)](https://github.com/stefanposs/dependapy/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![PyPI](https://img.shields.io/pypi/v/dependapy.svg)](https://pypi.org/project/dependapy/)
-[![codecov](https://codecov.io/gh/YOUR_USERNAME/dependapy/branch/main/graph/badge.svg)](https://codecov.io/gh/YOUR_USERNAME/dependapy)
 [![Website](https://img.shields.io/badge/website-stefanposs.com-blue)](https://stefanposs.com)
 
 ## Features
@@ -17,16 +16,30 @@
 
 ## Installation
 
-### With uv (recommended)
+### From PyPI (recommended)
 
 ```bash
-uv pip install git+https://github.com/YOUR_USERNAME/dependapy.git
+# With uv
+uv add dependapy
 ```
 
-### With pip
+```bash
+# With pip
+pip install dependapy
+```
+
+### From Source (for development)
 
 ```bash
-pip install git+https://github.com/YOUR_USERNAME/dependapy.git
+# Clone the repository
+git clone https://github.com/stefanposs/dependapy.git
+cd dependapy
+
+# Install in development mode with uv
+uv pip install -e .
+
+# Or with pip
+pip install -e .
 ```
 
 ## Usage
@@ -39,27 +52,40 @@ To analyze your current repository and create pull requests for updates:
 # Set your GitHub token for PR creation
 export GITHUB_TOKEN=your_github_token
 
-# Run dependapy
+# Run dependapy (if installed from PyPI)
+dependapy
+
+# Or run as a module
 python -m dependapy.main
+```
+
+If you're using `uv`:
+
+```bash
+# Set your GitHub token for PR creation
+export GITHUB_TOKEN=your_github_token
+
+# Run with uv
+uv run python -m dependapy.main
 ```
 
 To only check for updates without creating pull requests:
 
 ```bash
+# If installed from PyPI
+dependapy --no-pr
+
+# Or run as a module
 python -m dependapy.main --no-pr
+
+# With uv
+uv run python -m dependapy.main --no-pr
 ```
 
 ### Command Line Options
 
 ```
-usage: main.py [-h] [--repo-path REPO_PATH] [--token TOKEN] [--no-pr]
-
-options:
-  -h, --help            show this help message and exit
-  --repo-path REPO_PATH  Path to the repository to scan (default: current directory)
-  --token TOKEN         GitHub token (default: from GITHUB_TOKEN environment variable)
-  --no-pr               Don't create or update pull requests, just show what would be updated
-```
+usage: dependapy.main [-h] [--repo-path REPO_PATH] [--token TOKEN] [--no-pr]
 
 Analyze and update Python dependencies
 
@@ -113,7 +139,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install git+https://github.com/YOUR_USERNAME/dependapy.git
+          uv add dependapy
 
       - name: Run dependapy
         env:
@@ -133,46 +159,3 @@ jobs:
    - Determines if Python version constraint is compatible with the newest Python versions
 3. **Smart Updates**: Only creates PRs when actual updates are needed
 4. **PR Management**: Creates a branch and PR, or updates an existing one if applicable
-
-## Development
-
-### Setup Development Environment
-
-```bash
-# Create virtual environment and install dev dependencies 
-make setup-dev
-
-# Or manually
-uv venv
-source .venv/bin/activate  # On macOS/Linux
-uv pip install -e ".[dev]"
-```
-
-### Available Make Commands
-
-```bash
-make help            # Show all available commands
-make test            # Run tests
-make coverage        # Run tests with coverage report
-make format          # Format code with ruff
-make analyze         # Run code analysis
-make typecheck       # Run type checking
-make qa              # Run all quality checks
-make pre-commit      # Run pre-commit hooks
-make demo            # Run example usage demonstration
-```
-
-### Pre-commit Hooks
-
-The project uses pre-commit hooks to ensure code quality. They are installed automatically when running `make setup-dev`, but you can also install them manually:
-
-```bash
-make pre-commit-install
-```
-
-This will set up the following checks to run automatically before each commit:
-- Code formatting with ruff
-- Linting with ruff
-- Type checking with pyright
-- Security checks with bandit
-- YAML/TOML validation
