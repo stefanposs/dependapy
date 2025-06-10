@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - 'main'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - name: Clone repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: '0'
+        token: ${{ secrets.TOKEN_GITHUB_TO_GITHUB_REPOSITORIES_RW }}
+    - name: Use Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Install dependencies
+      run: |
+        # Install uv using the official installation method
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        
+        # Add uv to PATH (use .local/bin where it's actually installed)
+        export PATH="$HOME/.local/bin:$PATH"
+        
+        # Create a virtual environment or use system flag
+        uv sync
+        
+        # Use uv to install dependencies
+        uv python add twine pytest-timeout pytest-asyncio pytest-cov ruff pyright bandit
+
+    - name: Run QA
+      run: make qa
+    - name: Get next version
+      id: get_next_version
+      uses: thenativeweb/get-next-version@2.6.3
+    - name: Create new version
+      if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
+      run: |
+        sed -i -r "s/(version = \")([0-9]+\.[0-9]+\.[0-9]+)(\")/\1${{ steps.get_next_version.outputs.version }}\3/" pyproject.toml
+        git config --global user.email "hello@thenativeweb.io"
+        git config --global user.name "${{ github.actor }}"
+        git add pyproject.toml
+        git commit -m 'chore: Bump version to ${{ steps.get_next_version.outputs.version }}. [skip ci]'
+        git push
+        git tag ${{ steps.get_next_version.outputs.version }}
+        git push origin ${{ steps.get_next_version.outputs.version }}
+    - name: Build package
+      if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
+      run: |
+        python -m build
+    - name: Publish package
+      if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.TOKEN_GITHUB_TO_PYPI_RW }}
+      run: |
+        twine upload dist/*
