@@ -124,7 +124,9 @@ def create_pr_with_pygithub(
 
     # Commit changes
     commit_message = "chore(dependapy): update dependencies and python version"
-    subprocess.run(["git", "-C", str(repo_path), "commit", "-m", commit_message], check=True)
+    subprocess.run(
+        ["git", "-C", str(repo_path), "commit", "-m", commit_message], check=True
+    )
 
     # Push changes
     subprocess.run(
@@ -194,7 +196,9 @@ def create_pr_with_gh_cli(
 
     # Commit changes
     commit_message = "chore(dependapy): update dependencies and python version"
-    subprocess.run(["git", "-C", str(repo_path), "commit", "-m", commit_message], check=True)
+    subprocess.run(
+        ["git", "-C", str(repo_path), "commit", "-m", commit_message], check=True
+    )
 
     # Push changes
     subprocess.run(
@@ -213,7 +217,9 @@ def create_pr_with_gh_cli(
             text=True,
             check=True,
         )
-        pr_exists = len(result.stdout.strip()) > 2  # Check if output is more than empty JSON array
+        pr_exists = (
+            len(result.stdout.strip()) > 2
+        )  # Check if output is more than empty JSON array
     except subprocess.CalledProcessError:
         pr_exists = False
 
@@ -242,7 +248,17 @@ def create_pr_with_gh_cli(
         )
 
         result = subprocess.run(
-            ["gh", "pr", "create", "--title", pr_title, "--body", pr_body, "--head", branch_name],
+            [
+                "gh",
+                "pr",
+                "create",
+                "--title",
+                pr_title,
+                "--body",
+                pr_body,
+                "--head",
+                branch_name,
+            ],
             cwd=repo_path,
             env=env,
             capture_output=True,
@@ -263,7 +279,14 @@ def setup_git_for_commit(repo_path: Path, branch_name: str) -> None:
         check=True,
     )
     subprocess.run(
-        ["git", "-C", str(repo_path), "config", "user.email", "dependapy-bot@noreply.github.com"],
+        [
+            "git",
+            "-C",
+            str(repo_path),
+            "config",
+            "user.email",
+            "dependapy-bot@noreply.github.com",
+        ],
         check=True,
     )
 
@@ -289,7 +312,11 @@ def setup_git_for_commit(repo_path: Path, branch_name: str) -> None:
                 stderr=subprocess.DEVNULL,
             )
             # Branch exists, just checkout
-            subprocess.run(["git", "-C", str(repo_path), "checkout", branch_name], check=True)
+            subprocess.run(
+                ["git", "-C", str(repo_path), "checkout", branch_name], check=True
+            )
         except subprocess.CalledProcessError:
             # Branch doesn't exist, create it
-            subprocess.run(["git", "-C", str(repo_path), "checkout", "-b", branch_name], check=True)
+            subprocess.run(
+                ["git", "-C", str(repo_path), "checkout", "-b", branch_name], check=True
+            )

@@ -26,6 +26,7 @@ dependencies = [
     "packaging==23.2",
     "tomli==2.0.1",
     "PyGithub==2.1.1",
+    "ruff>=0.3.2",
 ]
 
 
@@ -45,44 +46,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["dependapy"]
-
-[tool.ruff]
-line-length = 100
-lint.select = ["ALL"]  # Enable all rules
-lint.ignore = [
-    # Ignore assert usage in tests
-    "S101", 
-    # Ignore missing type annotations in tests and non-critical code
-    "ANN001", "ANN201", 
-    # Ignore docstring style issues
-    "D400", "D401", "D415", "D205", "D212", "D200", 
-    # Ignore subprocess security issues - they're used with fixed commands
-    "S603", "S607",
-    # Ignore blind exceptions - already handled with logging
-    "BLE001",
-    # Ignore magic values in comparisons
-    "PLR2004",
-    # Ignore unnecessary else after return
-    "RET505",
-    # Ignore function complexity for now
-    "C901", "PLR0912",
-]
-
-[tool.ruff.lint.per-file-ignores]
-"tests/*.py" = [
-    "S101",     # Allow assert in tests
-    "F401",     # Allow unused imports in tests
-    "UP015",    # Allow open mode parameters in tests
-    "PT001",    # Allow pytest.fixture without parentheses
-    "S106",     # Allow hardcoded passwords in test code
-    "I001",     # Allow unsorted imports in tests
-    "W291",     # Allow trailing whitespace in tests
-    "PTH123",   # Allow open() instead of Path.open() in tests
-    "PTH103",   # Allow os.makedirs() instead of Path.mkdir(parents=True) in tests
-    "SIM117",   # Allow nested with statements in tests
-    "ARG005",   # Allow unused arguments in tests
-    "COM812",   # Allow missing trailing commas in tests
-]
 
 [tool.bandit]
 exclude_dirs = ["tests"]

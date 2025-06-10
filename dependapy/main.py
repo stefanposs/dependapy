@@ -23,7 +23,9 @@ logger = logging.getLogger("dependapy")
 
 def main():
     """Main entry point for dependapy"""
-    parser = argparse.ArgumentParser(description="Analyze and update Python dependencies")
+    parser = argparse.ArgumentParser(
+        description="Analyze and update Python dependencies"
+    )
     parser.add_argument(
         "--repo-path",
         default=str(Path.cwd()),

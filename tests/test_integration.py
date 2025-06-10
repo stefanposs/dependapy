@@ -1,7 +1,6 @@
 """Integration test for dependapy"""
 
 import os
-import shutil
 import tempfile
 from pathlib import Path
 from unittest import mock
@@ -85,8 +84,12 @@ def test_full_workflow_without_pr(mock_get_version, mock_py_versions, sample_rep
     with open(sample_repo / "pyproject.toml", "r") as f:
         main_content = f.read()
         assert 'requires-python = ">=3.10"' in main_content
-        assert any(["requests>=2.31.0" in main_content, '"requests>=2.31.0"' in main_content])
-        assert any(["packaging>=23.2" in main_content, '"packaging>=23.2"' in main_content])
+        assert any(
+            ["requests>=2.31.0" in main_content, '"requests>=2.31.0"' in main_content]
+        )
+        assert any(
+            ["packaging>=23.2" in main_content, '"packaging>=23.2"' in main_content]
+        )
 
     # Verify the subproject file was updated correctly
     with open(sample_repo / "subproject" / "pyproject.toml", "r") as f:

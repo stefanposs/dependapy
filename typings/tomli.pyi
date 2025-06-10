@@ -1,0 +1,6 @@
+"""Type stubs for tomli."""
+
+from typing import Any, BinaryIO, Dict
+
+def load(f: BinaryIO) -> Dict[str, Any]: ...
+def loads(s: str) -> Dict[str, Any]: ...

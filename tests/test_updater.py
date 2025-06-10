@@ -2,8 +2,6 @@
 
 import tempfile
 from pathlib import Path
-import pytest
-from unittest import mock
 
 from dependapy.analyzer import FileAnalysisResult, PythonVersionUpdateInfo, UpdateInfo
 from dependapy.updater import update_dependencies
