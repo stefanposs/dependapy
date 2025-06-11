@@ -40,26 +40,10 @@ jobs:
 
     - name: Run QA
       run: make qa
-    - name: Get next version
-      id: get_next_version
-      uses: thenativeweb/get-next-version@2.6.3
-    - name: Create new version
-      if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
-      run: |
-        sed -i -r "s/(version = \")([0-9]+\.[0-9]+\.[0-9]+)(\")/\1${{ steps.get_next_version.outputs.version }}\3/" pyproject.toml
-        git config --global user.email "hello@stefanposs.com"
-        git config --global user.name "${{ github.actor }}"
-        git add pyproject.toml
-        git commit -m 'chore: Bump version to ${{ steps.get_next_version.outputs.version }}. [skip ci]'
-        git push
-        git tag ${{ steps.get_next_version.outputs.version }}
-        git push origin ${{ steps.get_next_version.outputs.version }}
     - name: Build package
-      if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
       run: |
         uv build
     - name: Publish package
-      if: ${{ steps.get_next_version.outputs.hasNextVersion == 'true' }}
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.TOKEN_GITHUB_TO_PYPI_RW }}
