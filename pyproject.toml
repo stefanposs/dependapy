@@ -24,7 +24,7 @@ classifiers = [
 dependencies = [
     "requests==2.32.4",
     "packaging==23.2",
-    "tomli==2.0.1",
+    "tomli==2.2.1",
     "PyGithub==2.6.1",
     "ruff>=0.3.2",
 ]
