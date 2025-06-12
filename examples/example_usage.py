@@ -1,6 +1,7 @@
 """
 Example script to demonstrate how to use dependapy by creating a random test project
 """
+
 import os
 import subprocess
 import shutil
@@ -14,18 +15,18 @@ def create_example_project(base_dir: Path) -> Path:
     # Use the given directory directly without creating subdirectories
     project_dir = base_dir
     project_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Derive project name from the directory path
     project_name = project_dir.name
-    
+
     # Create src directory
     src_dir = project_dir / "src" / project_name
     src_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Create tests directory
     tests_dir = project_dir / "tests"
     tests_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Create pyproject.toml with outdated dependencies
     pyproject_content = """[build-system]
 requires = ["hatchling"]
@@ -66,10 +67,10 @@ packages = ["src/{project_name}"]
 """
     # Replace project name in pyproject.toml
     pyproject_content = pyproject_content.replace("{project_name}", project_name)
-    
+
     with open(project_dir / "pyproject.toml", "w") as f:
         f.write(pyproject_content)
-    
+
     # Create README.md
     readme_content = f"""# {project_dir.name}
 
@@ -87,10 +88,10 @@ This project includes several **intentionally outdated** dependencies:
 
 When you run dependapy on this project, it should detect and update these outdated dependencies.
 """
-    
+
     with open(project_dir / "README.md", "w") as f:
         f.write(readme_content)
-    
+
     # Create main module
     init_content = '''"""Example test project for dependapy."""
 
@@ -100,10 +101,10 @@ from .main import hello_world, calculate_something
 
 __all__ = ["hello_world", "calculate_something"]
 '''
-    
+
     with open(src_dir / "__init__.py", "w") as f:
         f.write(init_content)
-    
+
     # Create main.py
     main_content = '''"""Main module for the example test project."""
 
@@ -155,10 +156,10 @@ if __name__ == "__main__":
     print(f"2 + 3 = {calculate_something(2, 3)}")
     print(f"Is '1.2.3' a valid version? {check_version('1.2.3')}")
 '''
-    
+
     with open(src_dir / "main.py", "w") as f:
         f.write(main_content)
-    
+
     # Create CLI module
     cli_content = '''"""Command-line interface for the example test project."""
 
@@ -196,10 +197,10 @@ def main():
 if __name__ == "__main__":
     main()
 '''
-    
+
     with open(src_dir / "cli.py", "w") as f:
         f.write(cli_content)
-    
+
     # Create test file
     test_content = f'''"""Tests for the example test project."""
 
@@ -224,80 +225,84 @@ def test_check_version():
     assert check_version("1.0.0") is True
     assert check_version("invalid") is False
 '''
-    
+
     with open(tests_dir / "__init__.py", "w") as f:
         f.write("# Test package")
-    
+
     with open(tests_dir / "test_main.py", "w") as f:
         f.write(test_content)
-    
+
     return project_dir
 
 
 def main():
     """Create a random test project and run dependapy on it."""
     # Generate random project name
-    random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+    random_suffix = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
     project_name = f"test_project_{random_suffix}"
-    
+
     # Create project in examples directory
     examples_dir = Path(__file__).parent
     temp_dir = examples_dir / project_name
-    
+
     # Check if directory already exists and create a new name if needed
     while temp_dir.exists():
-        random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+        random_suffix = "".join(
+            random.choices(string.ascii_lowercase + string.digits, k=8)
+        )
         project_name = f"test_project_{random_suffix}"
         temp_dir = examples_dir / project_name
-    
+
     try:
         print(f"🏗️  Creating example project in: {temp_dir}")
         project_dir = create_example_project(temp_dir)
-        
+
         print(f"✅ Example project created at: {project_dir}")
         print(f"📁 Project directory: {project_dir.absolute()}")
-        
+
         # List the created files
         print("\n📋 Created files:")
         for file_path in sorted(project_dir.rglob("*")):
             if file_path.is_file():
                 relative_path = file_path.relative_to(project_dir)
                 print(f"   {relative_path}")
-        
+
         # Change to the project directory
         original_dir = Path.cwd()
         os.chdir(project_dir)
-        
+
         try:
             # Run dependapy using the parent project's uv environment
             print("\n🚀 Running dependapy analysis...")
             # Get the absolute path to the parent dependapy project
             dependapy_root = Path(__file__).parent.parent
-            
+
             # Run dependapy from the parent project directory using the full path
             cmd = [
-                "uv", "run", "--directory", str(dependapy_root),
-                "python", "-m", "dependapy.main", 
-                "--repo-path", str(project_dir), 
-                "--no-pr"
+                "uv",
+                "run",
+                "--directory",
+                str(dependapy_root),
+                "python",
+                "-m",
+                "dependapy.main",
+                "--repo-path",
+                str(project_dir),
+                "--no-pr",
             ]
             print(f"Executing command: {' '.join(cmd)}")
             result = subprocess.run(
-                cmd, 
-                check=True, 
-                capture_output=True, 
-                text=True, 
-                cwd=str(dependapy_root)
+                cmd, check=True, capture_output=True, text=True, cwd=str(dependapy_root)
             )
-            
+
             print("✅ Dependapy analysis completed successfully!")
             print("\n📋 Output:")
             print(result.stdout)
-            
+
             if result.stderr:
                 print("\n⚠️  Warnings/Errors:")
                 print(result.stderr)
-                
+
         except subprocess.CalledProcessError as e:
             print(f"❌ Dependapy failed with exit code {e.returncode}")
             print(f"stdout: {e.stdout}")
@@ -310,31 +315,33 @@ def main():
         finally:
             # Change back to original directory
             os.chdir(original_dir)
-        
+
         print(f"\n📝 You can manually inspect the project at: {project_dir.absolute()}")
         print("💡 To create a PR, set GITHUB_TOKEN and run without --no-pr flag")
         print(f"🗂️  The test project is permanently stored at: {temp_dir}")
-        
+
         # Ask if user wants to keep or delete the test project
         try:
             keep = input("\n❓ Keep the test project? [y/N]: ").lower().strip()
-            if keep not in ['y', 'yes']:
+            if keep not in ["y", "yes"]:
                 print("🧹 Cleaning up test project...")
                 shutil.rmtree(temp_dir)
                 print("✅ Test project cleaned up")
             else:
                 print(f"📁 Test project kept at: {temp_dir}")
-                print(f"💡 You can run dependapy on it again with: cd {temp_dir} && uv run --directory /Users/stefanposs/Repos/dependapy python -m dependapy.main --repo-path . --no-pr")
+                print(
+                    f"💡 You can run dependapy on it again with: cd {temp_dir} && uv run --directory /Users/stefanposs/Repos/dependapy python -m dependapy.main --repo-path . --no-pr"
+                )
         except KeyboardInterrupt:
             print(f"\n📁 Test project kept at: {temp_dir}")
-        
+
     except Exception as e:
         print(f"❌ Error creating or running test project: {e}")
         # Clean up on error
         if temp_dir.exists():
             shutil.rmtree(temp_dir)
         return 1
-    
+
     return 0
 
 
