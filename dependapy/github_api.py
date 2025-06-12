@@ -8,13 +8,15 @@ import os
 import subprocess
 from pathlib import Path
 
+from dependapy.constants import SENTINEL, SentinelType
+
 logger = logging.getLogger("dependapy.github_api")
 
 
-def get_repo_info(repo_path: Path) -> tuple:
+def get_repo_info(repo_path: Path) -> tuple[str, str] | SentinelType:
     """
     Get repository owner and name from remote URL
-    Returns a tuple of (owner, repo)
+    Returns a tuple of (owner, repo) or SENTINEL if the info could not be retrieved
     """
     try:
         # Get the remote URL
@@ -42,7 +44,7 @@ def get_repo_info(repo_path: Path) -> tuple:
     except Exception:
         logger.exception("Failed to get repository info")
 
-    return None, None
+    return SENTINEL
 
 
 def create_or_update_pull_request(
@@ -100,10 +102,14 @@ def create_pr_with_pygithub(
         raise ImportError(error_message) from exc
 
     # Get repository info
-    owner, repo_name = get_repo_info(repo_path)
-    if not owner or not repo_name:
+    repo_info = get_repo_info(repo_path)
+    if repo_info is SENTINEL:
         error_message = "Could not determine repository owner and name"
         raise ValueError(error_message)
+
+    # We've verified that repo_info is not SENTINEL, so it must be a tuple
+    assert isinstance(repo_info, tuple)
+    owner, repo_name = repo_info
 
     # Setup git for committing
     setup_git_for_commit(repo_path, branch_name)

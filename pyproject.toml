@@ -22,11 +22,11 @@ classifiers = [
 ]
 
 dependencies = [
-    "requests==2.31.0",
-    "packaging==23.2",
-    "tomli==2.0.1",
-    "PyGithub==2.1.1",
-    "ruff>=0.3.2",
+    "requests==2.32.4",
+    "packaging==25.0",
+    "tomli==2.2.1",
+    "PyGithub==2.6.1",
+    "ruff==0.11.13",
 ]
 
 
@@ -34,7 +34,7 @@ dependencies = [
 dev = [
     "pytest==7.4.0",
     "pytest-mock==3.11.0",
-    "ruff==0.3.2",
+    "ruff==0.11.13",
     "pyright==1.1.401",
     "bandit==1.7.5",
     "pytest-cov==4.1.0",

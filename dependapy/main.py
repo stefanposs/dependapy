@@ -10,7 +10,9 @@ import sys
 from pathlib import Path
 
 from dependapy.analyzer import scan_repository
+from dependapy.constants import SENTINEL
 from dependapy.github_api import create_or_update_pull_request
+from dependapy.offline_pr import create_git_patch
 from dependapy.updater import update_dependencies
 
 # Configure logging
@@ -37,6 +39,16 @@ def main():
         help="Don't create a pull request, just update files locally",
     )
     parser.add_argument(
+        "--offline-pr",
+        action="store_true",
+        help="Create a Git patch file instead of using GitHub API for PR creation",
+    )
+    parser.add_argument(
+        "--patch-output",
+        default="dependapy-changes.patch",
+        help="Path to save the patch file when using --offline-pr (default: dependapy-changes.patch)",
+    )
+    parser.add_argument(
         "--token",
         default=None,
         help="GitHub token (default: from GITHUB_TOKEN environment variable)",
@@ -50,7 +62,8 @@ def main():
 
     repo_path = Path(args.repo_path)
     dry_run = args.dry_run
-    create_pr = not args.no_pr and not dry_run
+    create_pr = not args.no_pr and not dry_run and not args.offline_pr
+    create_offline_pr = args.offline_pr and not dry_run
 
     try:
         # Analyze repository
@@ -67,6 +80,13 @@ def main():
 
         # Update dependencies
         update_results = update_dependencies(results)
+
+        if update_results is SENTINEL:
+            logger.error("Failed to update dependencies")
+            return 1
+
+        # We've verified that update_results is not SENTINEL, so it must be a list
+        assert isinstance(update_results, list)
         updated_files = [r.file_path for r in update_results if r.modified]
 
         if not updated_files:
@@ -87,6 +107,24 @@ def main():
                 github_token=github_token,
             )
             logger.info("Pull request created at %s", pr_url)
+        elif create_offline_pr:
+            # Create Git patch instead of PR
+            branch_name = "dependapy/dependency-updates"  # Define a branch name
+            patch_path = create_git_patch(
+                repo_path=repo_path,
+                branch_name=branch_name,
+                updated_files=updated_files,
+                output_path=args.patch_output,
+            )
+            if patch_path is SENTINEL:
+                logger.error("Failed to create Git patch")
+                return 1
+
+            logger.info("Created Git patch at %s", patch_path)
+            logger.info(
+                "To apply this patch on another machine: cd /path/to/repo && git apply %s",
+                patch_path,
+            )
         else:
             logger.info("Updated dependencies in %d files", len(updated_files))
     except Exception:

@@ -14,14 +14,23 @@ except ImportError:
 import requests
 from packaging.version import parse
 
+from dependapy.constants import (
+    DEFAULT_API_TIMEOUT,
+    NUM_LATEST_PYTHON_VERSIONS,
+    PYTHON_EOL_API_URL,
+    PYPI_API_URL_TEMPLATE,
+    SENTINEL,
+    SentinelType,
+)
+
 logger = logging.getLogger("dependapy.analyzer")
 
 
-# Get the three latest Python minor versions
+# Get the latest Python minor versions
 def get_latest_python_versions() -> list[str]:
-    """Get the three latest Python 3.x minor versions"""
+    """Get the latest Python 3.x minor versions"""
     try:
-        response = requests.get("https://endoflife.date/api/python.json", timeout=10)
+        response = requests.get(PYTHON_EOL_API_URL, timeout=DEFAULT_API_TIMEOUT)
         response.raise_for_status()
         python_versions = response.json()
 
@@ -31,8 +40,8 @@ def get_latest_python_versions() -> list[str]:
         ]
         py3_versions.sort(key=lambda x: parse(x), reverse=True)
 
-        # Get the three latest minor versions
-        latest_versions = py3_versions[:3]
+        # Get the configured number of latest minor versions
+        latest_versions = py3_versions[:NUM_LATEST_PYTHON_VERSIONS]
         logger.info("Latest Python versions: %s", ", ".join(latest_versions))
     except Exception:
         logger.exception("Failed to get latest Python versions")
@@ -43,22 +52,23 @@ def get_latest_python_versions() -> list[str]:
 
 
 # Cache for PyPI package versions to avoid repeated requests
-_PYPI_CACHE: dict[str, str | None] = {}
+_PYPI_CACHE: dict[str, str | SentinelType] = {}
 
 
-def get_latest_version(package_name: str) -> str | None:
+def get_latest_version(package_name: str) -> str | SentinelType:
     """Get the latest version of a package from PyPI"""
     if package_name in _PYPI_CACHE:
         return _PYPI_CACHE[package_name]
 
     try:
         response = requests.get(
-            f"https://pypi.org/pypi/{package_name}/json", timeout=10
+            PYPI_API_URL_TEMPLATE.format(package_name=package_name),
+            timeout=DEFAULT_API_TIMEOUT,
         )
         if response.status_code == 404:
             logger.warning("Package %s not found on PyPI", package_name)
-            _PYPI_CACHE[package_name] = None
-            return None
+            _PYPI_CACHE[package_name] = SENTINEL
+            return SENTINEL
 
         response.raise_for_status()
         data = response.json()
@@ -66,8 +76,8 @@ def get_latest_version(package_name: str) -> str | None:
         _PYPI_CACHE[package_name] = latest_version
     except Exception:
         logger.exception("Error fetching version for %s", package_name)
-        _PYPI_CACHE[package_name] = None
-        return None
+        _PYPI_CACHE[package_name] = SENTINEL
+        return SENTINEL
     else:
         return latest_version
 
@@ -125,7 +135,7 @@ class FileAnalysisResult:
 
 def scan_file(
     file_path: Path, latest_python_versions: list[str]
-) -> FileAnalysisResult | None:
+) -> FileAnalysisResult | SentinelType:
     """Scan a single pyproject.toml file for updates"""
     logger.info("Analyzing %s", file_path)
 
@@ -134,12 +144,12 @@ def scan_file(
             pyproject = tomllib.load(f)
     except Exception:
         logger.exception("Failed to parse %s", file_path)
-        return None
+        return SENTINEL
 
     project_section = pyproject.get("project", {})
     if not project_section:
         logger.warning("No [project] section in %s, skipping", file_path)
-        return None
+        return SENTINEL
 
     # Check Python version constraint
     python_update = None
@@ -181,8 +191,11 @@ def scan_file(
             continue
 
         latest_version = get_latest_version(package_name)
-        if not latest_version:
+        if latest_version is SENTINEL:
             continue
+
+        # At this point, we know latest_version is a str
+        assert isinstance(latest_version, str)
 
         if parse(latest_version) > parse(current_version):
             update = UpdateInfo(
@@ -201,7 +214,7 @@ def scan_file(
 
     if not package_updates and not python_update:
         logger.info("No updates needed for %s", file_path)
-        return None
+        return SENTINEL
 
     return FileAnalysisResult(
         file_path=file_path,
@@ -210,17 +223,22 @@ def scan_file(
     )
 
 
-def get_min_python_version(requires_python: str) -> str | None:
+def get_min_python_version(requires_python: str) -> str | SentinelType:
     """Extract minimum Python version from requires-python constraint"""
-    # Handle common formats like ">=3.8", ">=3.8,<4.0", ">=3.8.0"
-    if requires_python.startswith(">="):
-        version_part = requires_python.split(",")[0].strip()[2:]
-        # Ensure we get just the minor version (3.x)
-        if version_part.startswith("3."):
-            parts = version_part.split(".")
-            if len(parts) >= 2:
-                return f"{parts[0]}.{parts[1]}"
-    return None
+    try:
+        # Handle common formats like ">=3.8", ">=3.8,<4.0", ">=3.8.0"
+        if requires_python.startswith(">="):
+            version_part = requires_python.split(",")[0].strip()[2:]
+            # Ensure we get just the minor version (3.x)
+            if version_part.startswith("3."):
+                parts = version_part.split(".")
+                if len(parts) >= 2:
+                    return f"{parts[0]}.{parts[1]}"
+    except Exception as e:
+        logger.warning(
+            "Failed to extract Python version from %s: %s", requires_python, e
+        )
+    return SENTINEL
 
 
 def scan_repository(repo_path: Path) -> list[FileAnalysisResult]:
@@ -234,7 +252,7 @@ def scan_repository(repo_path: Path) -> list[FileAnalysisResult]:
     results = []
     for file_path in pyproject_files:
         result = scan_file(file_path, latest_python_versions)
-        if result:
+        if result is not SENTINEL:
             results.append(result)
 
     return results

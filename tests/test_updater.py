@@ -24,7 +24,7 @@ name = "test-project"
 version = "0.1.0"
 requires-python = ">=3.8"
 dependencies = [
-    "requests>=2.25.0",
+    "requests>=2.25.0",  # This is a comment that shouldn't break the pattern
     "packaging>=23.0",
 ]
             """)
@@ -149,7 +149,21 @@ dependencies = ["requests>=2.25.0"]
         # Update the dependencies - should handle the non-existent file gracefully
         update_results = update_dependencies(analysis_results)
 
-        # Check that only the existing file was updated
-        assert len(update_results) == 1
-        assert update_results[0].file_path == test_file
-        assert update_results[0].modified is True
+        # Check that both files are in results, but only the existing one was modified
+        assert len(update_results) == 2
+
+        # Find the results for each file
+        test_file_result = next(
+            (r for r in update_results if r.file_path == test_file), None
+        )
+        non_existent_file_result = next(
+            (r for r in update_results if r.file_path == non_existent_file), None
+        )
+
+        # Check that the test file was updated
+        assert test_file_result is not None
+        assert test_file_result.modified is True
+
+        # Check that the non-existent file was not modified
+        assert non_existent_file_result is not None
+        assert non_existent_file_result.modified is False

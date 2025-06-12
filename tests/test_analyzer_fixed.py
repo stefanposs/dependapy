@@ -178,7 +178,7 @@ dependencies = ["requests>=2.25.0"]
         ) as mock_py_versions:
             with mock.patch("dependapy.analyzer.scan_file") as mock_scan:
                 mock_py_versions.return_value = ["3.12", "3.11", "3.10"]
-
+                
                 # Mock only project2 needing updates
                 mock_scan.side_effect = (
                     lambda file_path, _: SENTINEL

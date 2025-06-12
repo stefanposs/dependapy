@@ -100,14 +100,11 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.TOKEN_GITHUB_TO_PYPI_RW }}
       run: |
-        # Ensure we have the PATH set up correctly
         export PATH="$HOME/.local/bin:$PATH"
         
-        # Check package before uploading using twine installed via uv
         echo "Checking package with twine..."
         uv run twine check dist/*
         
-        # Upload to PyPI with verbose output and skip existing versions
         echo "Uploading to PyPI..."
         uv run twine upload dist/* --verbose --skip-existing || {
           echo "❌ Upload failed! This might be due to:"

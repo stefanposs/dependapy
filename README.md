@@ -82,19 +82,40 @@ python -m dependapy.main --no-pr
 uv run python -m dependapy.main --no-pr
 ```
 
+### Using Offline PR Mode
+
+If you're running dependapy in an environment without GitHub API access (like a restricted CI runner), you can use the offline PR mode to create a Git patch file instead:
+
+```bash
+# Create a Git patch without using GitHub API
+dependapy --offline-pr
+
+# Specify a custom path for the patch file
+dependapy --offline-pr --patch-output my-updates.patch
+
+# Apply the patch later on a machine with GitHub access
+git apply my-updates.patch
+git checkout -b dependapy/updates
+git commit -am "Apply dependapy updates"
+git push origin dependapy/updates
+# Then create a PR via the GitHub UI
+```
+
 ### Command Line Options
 
 ```
-usage: dependapy.main [-h] [--repo-path REPO_PATH] [--token TOKEN] [--no-pr]
+usage: dependapy.main [-h] [--repo-path REPO_PATH] [--token TOKEN] [--no-pr] [--offline-pr] [--patch-output PATH] [--dry-run]
 
 Analyze and update Python dependencies
 
 options:
-  -h, --help           show this help message and exit
-  --repo-path REPO_PATH
-                       Path to the repository to scan (default: current directory)
-  --token TOKEN        GitHub token (default: from GITHUB_TOKEN environment variable)
-  --no-pr              Don't create or update pull requests, just show what would be updated
+  -h, --help             show this help message and exit
+  --repo-path REPO_PATH  Path to the repository to scan (default: current directory)
+  --token TOKEN          GitHub token (default: from GITHUB_TOKEN environment variable)
+  --no-pr                Don't create a pull request, just update files locally
+  --offline-pr           Create a Git patch file instead of using GitHub API for PR creation
+  --patch-output PATH    Path to save the patch file when using --offline-pr (default: dependapy-changes.patch)
+  --dry-run              Don't make any changes, just report what would be changed
 ```
 
 ## Setting Up as a GitHub Action
