@@ -32,20 +32,87 @@ jobs:
         # Add uv to PATH (use .local/bin where it's actually installed)
         export PATH="$HOME/.local/bin:$PATH"
         
-        # Create a virtual environment or use system flag
+        # Sync dependencies from pyproject.toml
         uv sync
         
-        # Use uv to install dependencies
-        uv add twine pytest-timeout pytest-asyncio pytest-cov ruff pyright bandit
+        # Install additional tools needed for release
+        uv add twine
 
     - name: Run QA
       run: make qa
-    - name: Build package
+    
+    - name: Get current version
+      id: get_version
       run: |
-        uv build
+        # Extract version from pyproject.toml
+        VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+        echo "current_version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Current version: $VERSION"
+    
+    - name: Check if version already exists on PyPI
+      id: check_version
+      run: |
+        # Check if this version already exists on PyPI
+        VERSION="${{ steps.get_version.outputs.current_version }}"
+        echo "Checking if version $VERSION already exists on PyPI..."
+        
+        # Check PyPI API for existing versions
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://pypi.org/pypi/dependapy/$VERSION/json")
+        
+        if [ "$HTTP_STATUS" = "200" ]; then
+          echo "version_exists=true" >> $GITHUB_OUTPUT
+          echo "❌ ERROR: Version $VERSION already exists on PyPI!"
+          echo "Please update the version in pyproject.toml before releasing."
+          exit 1
+        elif [ "$HTTP_STATUS" = "404" ]; then
+          echo "version_exists=false" >> $GITHUB_OUTPUT
+          echo "✅ Version $VERSION does not exist on PyPI. Proceeding with build."
+        else
+          echo "⚠️  WARNING: Could not check PyPI (HTTP $HTTP_STATUS). Proceeding with caution."
+          echo "version_exists=unknown" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Build package
+      if: ${{ steps.check_version.outputs.version_exists == 'false' }}
+      run: |
+        echo "Building package version ${{ steps.get_version.outputs.current_version }}..."
+        uv build --sdist --wheel
+        
+        # Verify the built packages
+        echo "Built packages:"
+        ls -la dist/
+        
+        # Verify package contents
+        echo "Package contents:"
+        tar -tzf dist/*.tar.gz | head -20
+    
+    - name: Test package installation
+      if: ${{ steps.check_version.outputs.version_exists == 'false' }}
+      run: |
+        # Test that the built package can be installed
+        echo "Testing package installation..."
+        uv pip install dist/*.whl
+        uv run dependapy --help
+    
     - name: Publish package
+      if: ${{ steps.check_version.outputs.version_exists == 'false' }}
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.TOKEN_GITHUB_TO_PYPI_RW }}
       run: |
-        uv run twine upload dist/* --verbose
+        # Ensure we have the PATH set up correctly
+        export PATH="$HOME/.local/bin:$PATH"
+        
+        # Check package before uploading using twine installed via uv
+        echo "Checking package with twine..."
+        uv run twine check dist/*
+        
+        # Upload to PyPI with verbose output and skip existing versions
+        echo "Uploading to PyPI..."
+        uv run twine upload dist/* --verbose --skip-existing || {
+          echo "❌ Upload failed! This might be due to:"
+          echo "1. Version ${{ steps.get_version.outputs.current_version }} already exists on PyPI"
+          echo "2. Authentication issues"
+          echo "3. Package validation errors"
+          exit 1
+        }
