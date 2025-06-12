@@ -42,6 +42,7 @@ jobs:
       run: make qa
     - name: Build package
       run: |
+        uv build
     - name: Publish package
       env:
         TWINE_USERNAME: __token__
