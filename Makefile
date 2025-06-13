@@ -4,6 +4,11 @@ PACKAGE := dependapy
 TEST_DIR := tests
 PYTHON_DIRS := $(PACKAGE) $(TEST_DIR)
 
+_DEFAULT: ci
+
+ci: format analyze typecheck test coverage security dependency dependency-unused statistics
+.PHONY: analyze format dependency dependency-unused security typecheck coverage statistics test ci help
+
 # ----------- Lint & Format -----------
 # Analyze and lint code with ruff (auto-fix enabled)
 analyze:
@@ -12,6 +17,7 @@ analyze:
 	@uv run ruff check $(PYTHON_DIRS)
 	@echo ""
 	@echo "See https://docs.astral.sh/ruff/ for details."
+	@echo ""
 
 # Format code with ruff (PEP8)
 format:
@@ -20,6 +26,7 @@ format:
 	@uv run ruff format $(PYTHON_DIRS)
 	@echo ""
 	@echo "See https://docs.astral.sh/ruff/ for details."
+	@echo ""
 
 # ---------- Coverage -----------
 # Run tests with coverage analysis
@@ -27,6 +34,7 @@ coverage:
 	@echo "############## Checking Test Coverage ##############"
 	@echo "Checking test coverage..."
 	@uv run pytest --cov=$(PACKAGE) --cov-report=term-missing $(TEST_DIR)
+	@echo ""
 
 # ----------- Dependency Checks -----------
 # Show all outdated packages from pyproject.toml (incl. dev, sorted alphabetically)
@@ -41,6 +49,7 @@ dependency:
 	@rm -f requirements.txt
 	@echo ""
 	@echo "See https://pip.pypa.io/en/stable/cli/pip_list/ for details."
+	@echo ""
 
 # ----------- Unused Dependency Check -----------
 # Find unused dependencies in src and test directories
@@ -51,6 +60,7 @@ dependency-unused:
 	@uv run deptry $(PACKAGE) $(TEST_DIR) || (echo "Unused dependencies found. See above for details.")
 	@echo ""
 	@echo "See https://github.com/fpgmaas/deptry for details."
+	@echo ""
 
 # ----------- Export/Freeze -----------
 # Export requirements.txt from pyproject.toml (incl. extra index-url)
@@ -61,34 +71,7 @@ freeze:
 	@echo "... done"
 	@echo ""
 	@echo "See https://pip.pypa.io/en/stable/cli/pip_freeze/ for details."
-
-# ----------- QA/CI -----------
-# Run all checks in a logical order (ideal for CI/CD or pre-commit)
-ci:
-	@echo "############### FORMAT ###############"
-	@make format
 	@echo ""
-	@echo "############### ANALYZE ###############"
-	@make analyze
-	@echo ""
-	@echo "############### TYPECHECK ###############"
-	@make typecheck
-	@echo ""
-	@echo "############### TEST ###############"
-	@make test
-	@echo ""
-	@echo "############### COVERAGE ###############"
-	@make coverage
-	@echo ""
-	@echo "############### SECURITY ###############"
-	@make security
-	@echo ""
-	@echo "############### DEPENDENCY ###############"
-	@make dependency
-	@make dependency-unused
-	@echo ""
-	@echo "############### STATISTICS ###############"
-	@make statistics
 
 # ----------- Security -----------
 # Security analysis with bandit
@@ -99,6 +82,7 @@ security:
 	@uv run bandit -r $(PACKAGE) -c pyproject.toml
 	@echo ""
 	@echo "See https://bandit.readthedocs.io/en/latest/ for details."
+	@echo ""
 
 # ----------- Statistics -----------
 # Show code statistics and quality metrics
@@ -107,19 +91,20 @@ statistics:
 	@echo "Generating code statistics..."
 	@uv add radon --dev
 	@echo "### Lines of Code (LoC) total:"
-	@uv run radon raw $(PACKAGE) | grep "LOC:" | awk '{s+=$2} END {print s " LoC"}'
+	@uv run radon raw $(PACKAGE) | grep "LOC:" | awk '{sum += $$2} END {print sum " LoC"}'
 	@echo ""
 	@echo "### Cyclomatic Complexity (total):"
 	@uv run radon cc $(PACKAGE) -a -s | grep "Average complexity" || true
 	@echo ""
 	@echo "### Maintainability Index (average):"
-	@uv run radon mi -s $(PACKAGE) | awk -F'[()]' '/ - [A-D] / {gsub(/ /,"",$2); sum+=($2+0); n++} END {if(n>0){avg=sum/n; grade=(avg>=80?"A":(avg>=70?"B":(avg>=60?"C":"D"))); printf "Average MI: %s (%.2f)\n", grade, avg} else {print "No MI data found."}}'
+	@uv run radon mi -s $(PACKAGE) | awk -F'[()]' '/ - [A-D] / {gsub(/ /,"",$$2); sum+=($$2+0); n++} END {if(n>0){avg=sum/n; grade=(avg>=80?"A":(avg>=70?"B":(avg>=60?"C":"D"))); printf "Average MI: %s (%.2f)\n", grade, avg} else {print "No MI data found."}}'
 	@echo ""
 	@echo "Legend:"
 	@echo "- Cyclomatic Complexity (CC): Measures the number of independent paths through your code. Lower is better. Grades: A (simple, easy to maintain) ... F (very complex, hard to maintain)."
 	@echo "- Maintainability Index (MI): Estimates how easy it is to maintain your code. Higher is better. A (>80, very maintainable), B (70-80, maintainable), C (60-70, moderate), D (<60, hard to maintain)."
 	@echo ""
 	@echo "See https://radon.readthedocs.io/en/latest/ for details."
+	@echo ""
 
 # ----------- Test -----------
 # Run all tests
@@ -127,6 +112,7 @@ test:
 	@echo "############## Running Tests ##############"
 	@echo "Running tests..."
 	@uv run pytest --maxfail=1 $(TEST_DIR)
+	@echo ""
 
 # ----------- Typecheck -----------
 # Static type checking with pyright
@@ -137,5 +123,4 @@ typecheck:
 	@uv run pyright $(PACKAGE)
 	@echo ""
 	@echo "See https://github.com/microsoft/pyright for details."
-
-.PHONY: analyze format dependency dependency-unused security typecheck coverage statistics test ci help
+	@echo ""

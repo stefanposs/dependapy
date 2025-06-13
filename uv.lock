@@ -267,10 +267,12 @@ dev = [
     { name = "bandit" },
     { name = "deptry" },
     { name = "pip" },
+    { name = "pydeps" },
     { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-mock" },
+    { name = "radon" },
     { name = "ruff" },
     { name = "twine" },
 ]
@@ -289,10 +291,12 @@ dev = [
     { name = "bandit", specifier = "==1.7.5" },
     { name = "deptry", specifier = ">=0.23.0" },
     { name = "pip", specifier = ">=25.1.1" },
+    { name = "pydeps", specifier = ">=3.0.1" },
     { name = "pyright", specifier = "==1.1.401" },
     { name = "pytest", specifier = "==7.4.0" },
     { name = "pytest-cov", specifier = "==4.1.0" },
     { name = "pytest-mock", specifier = "==3.11.0" },
+    { name = "radon", specifier = ">=6.0.1" },
     { name = "ruff", specifier = "==0.11.13" },
     { name = "twine", specifier = ">=6.0.1" },
 ]
@@ -458,6 +462,18 @@ wheels = [
 ]
 
 [[package]]
+name = "mando"
+version = "0.7.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "six" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/35/24/cd70d5ae6d35962be752feccb7dca80b5e0c2d450e995b16abd6275f3296/mando-0.7.1.tar.gz", hash = "sha256:18baa999b4b613faefb00eac4efadcf14f510b59b924b66e08289aa1de8c3500", size = 37868, upload-time = "2022-02-24T08:12:27.316Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d2/f0/834e479e47e499b6478e807fb57b31cc2db696c4db30557bb6f5aea4a90b/mando-0.7.1-py2.py3-none-any.whl", hash = "sha256:26ef1d70928b6057ee3ca12583d73c63e05c49de8972d620c278a7b206581a8a", size = 28149, upload-time = "2022-02-24T08:12:25.24Z" },
+]
+
+[[package]]
 name = "markdown-it-py"
 version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -582,6 +598,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/1d/b2/31537cf4b1ca988837256c910a668b553fceb8f069bedc4b1c826024b52c/pycparser-2.22.tar.gz", hash = "sha256:491c8be9c040f5390f5bf44a5b07752bd07f56edf992381b05c701439eec10f6", size = 172736, upload-time = "2024-03-30T13:22:22.564Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/13/a3/a812df4e2dd5696d1f351d58b8fe16a405b234ad2886a0dab9183fb78109/pycparser-2.22-py3-none-any.whl", hash = "sha256:c3702b6d3dd8c7abc1afa565d7e63d53a1d0bd86cdc24edd75470f4de499cfcc", size = 117552, upload-time = "2024-03-30T13:22:20.476Z" },
+]
+
+[[package]]
+name = "pydeps"
+version = "3.0.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "stdlib-list" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5a/03/ce4baba41362297576f84f2d1906af25e43b46cc368afda4ac8bfe4bfd81/pydeps-3.0.1.tar.gz", hash = "sha256:a57415a8fae2ff6840a199b7dfcfecb90c37e4b9b54b58a111808a3440bc03bc", size = 53070, upload-time = "2025-02-04T11:50:10.167Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a0/ea/663366200286a95fa6ac0ea3a67510cc5799983b102bddc845d9370bf1c8/pydeps-3.0.1-py3-none-any.whl", hash = "sha256:7c86ee63c9ee6ddd088c840364981c5aa214a994d323bb7fa4724fca30829bee", size = 47596, upload-time = "2025-02-04T11:50:07.717Z" },
 ]
 
 [[package]]
@@ -742,6 +770,19 @@ wheels = [
 ]
 
 [[package]]
+name = "radon"
+version = "6.0.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "colorama" },
+    { name = "mando" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b1/6d/98e61600febf6bd929cf04154537c39dc577ce414bafbfc24a286c4fa76d/radon-6.0.1.tar.gz", hash = "sha256:d1ac0053943a893878940fedc8b19ace70386fc9c9bf0a09229a44125ebf45b5", size = 1874992, upload-time = "2023-03-26T06:24:38.868Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/93/f7/d00d9b4a0313a6be3a3e0818e6375e15da6d7076f4ae47d1324e7ca986a1/radon-6.0.1-py2.py3-none-any.whl", hash = "sha256:632cc032364a6f8bb1010a2f6a12d0f14bc7e5ede76585ef29dc0cecf4cd8859", size = 52784, upload-time = "2023-03-26T06:24:33.949Z" },
+]
+
+[[package]]
 name = "readme-renderer"
 version = "44.0"
 source = { registry = "https://pypi.org/simple" }
@@ -864,12 +905,30 @@ wheels = [
 ]
 
 [[package]]
+name = "six"
+version = "1.17.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031, upload-time = "2024-12-04T17:35:28.174Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
+]
+
+[[package]]
 name = "smmap"
 version = "5.0.2"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/44/cd/a040c4b3119bbe532e5b0732286f805445375489fceaec1f48306068ee3b/smmap-5.0.2.tar.gz", hash = "sha256:26ea65a03958fa0c8a1c7e8c7a58fdc77221b8910f6be2131affade476898ad5", size = 22329, upload-time = "2025-01-02T07:14:40.909Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/04/be/d09147ad1ec7934636ad912901c5fd7667e1c858e19d355237db0d0cd5e4/smmap-5.0.2-py3-none-any.whl", hash = "sha256:b30115f0def7d7531d22a0fb6502488d879e75b260a9db4d0819cfb25403af5e", size = 24303, upload-time = "2025-01-02T07:14:38.724Z" },
+]
+
+[[package]]
+name = "stdlib-list"
+version = "0.11.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/5d/09/8d5c564931ae23bef17420a6c72618463a59222ca4291a7dd88de8a0d490/stdlib_list-0.11.1.tar.gz", hash = "sha256:95ebd1d73da9333bba03ccc097f5bac05e3aa03e6822a0c0290f87e1047f1857", size = 60442, upload-time = "2025-02-18T15:39:38.769Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/88/c7/4102536de33c19d090ed2b04e90e7452e2e3dc653cf3323208034eaaca27/stdlib_list-0.11.1-py3-none-any.whl", hash = "sha256:9029ea5e3dfde8cd4294cfd4d1797be56a67fc4693c606181730148c3fd1da29", size = 83620, upload-time = "2025-02-18T15:39:37.02Z" },
 ]
 
 [[package]]

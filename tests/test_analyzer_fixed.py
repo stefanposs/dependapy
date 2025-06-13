@@ -12,7 +12,8 @@ from dependapy.analyzer import (
     scan_file,
     scan_repository,
 )
-from dependapy.constants import SENTINEL
+from dependapy.constants import SENTINEL, DEFAULT_API_TIMEOUT
+from dependapy.constants import PYPI_API_URL_TEMPLATE
 
 
 def test_parse_dependency_version():
@@ -69,6 +70,11 @@ def test_get_latest_python_versions(mock_get):
 @mock.patch("dependapy.analyzer.requests.get")
 def test_get_latest_version(mock_get):
     """Test the get_latest_version function with mocked PyPI response"""
+    # Ensure the cache is cleared for this test
+    from dependapy.analyzer import _PYPI_CACHE
+
+    _PYPI_CACHE.clear()
+
     # Mock PyPI response
     mock_response = mock.Mock()
     mock_response.json.return_value = {"info": {"version": "2.31.0"}}
@@ -76,9 +82,15 @@ def test_get_latest_version(mock_get):
     mock_response.raise_for_status.return_value = None
     mock_get.return_value = mock_response
 
+    # Call the function to get the latest version
     version = get_latest_version("requests")
+
+    # Verify results
     assert version == "2.31.0"
-    mock_get.assert_called_with("https://pypi.org/pypi/requests/json", timeout=10)
+    mock_get.assert_called_once_with(
+        PYPI_API_URL_TEMPLATE.format(package_name="requests"),
+        timeout=DEFAULT_API_TIMEOUT,
+    )
 
     # Test caching
     version = get_latest_version("requests")
