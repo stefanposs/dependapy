@@ -33,7 +33,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest==7.4.0",
-    "pytest-mock==3.11.0",
+    "pytest-mock==3.14.1",
     "ruff==0.3.2",
     "pyright==1.1.401",
     "bandit==1.7.5",
