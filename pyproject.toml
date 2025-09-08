@@ -35,7 +35,7 @@ dev = [
     "pytest==7.4.0",
     "pytest-mock==3.11.0",
     "ruff==0.3.2",
-    "pyright==1.1.401",
+    "pyright==1.1.405",
     "bandit==1.7.5",
     "pytest-cov==4.1.0",
     "twine>=6.0.1",
