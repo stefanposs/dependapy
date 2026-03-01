@@ -1,0 +1,210 @@
+/* ============================================================================
+   Custom Branding — stefanposs.com
+   ============================================================================ */
+
+:root {
+  --md-primary-fg-color: #122E53 !important;
+  --md-primary-fg-color--light: #1a3d6b !important;
+  --md-primary-fg-color--dark: #0d1f38 !important;
+  --md-primary-bg-color: #ffffff !important;
+
+  --md-accent-fg-color: #122E53 !important;
+  --md-accent-fg-color--transparent: rgba(18, 46, 83, 0.1) !important;
+}
+
+.md-header {
+  background-color: #122E53 !important;
+}
+
+.md-tabs {
+  background-color: #122E53 !important;
+}
+
+.md-typeset a {
+  color: #122E53 !important;
+}
+
+.md-typeset a:hover {
+  color: #1a3d6b !important;
+}
+
+.md-nav__link--active {
+  color: #122E53 !important;
+}
+
+.md-nav__link:hover {
+  color: #122E53 !important;
+}
+
+/* Dark mode */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #1a3d6b !important;
+  --md-primary-fg-color--light: #2a4d7b !important;
+  --md-primary-fg-color--dark: #122E53 !important;
+}
+
+[data-md-color-scheme="slate"] .md-header {
+  background-color: #1a3d6b !important;
+}
+
+[data-md-color-scheme="slate"] .md-tabs {
+  background-color: #1a3d6b !important;
+}
+
+[data-md-color-scheme="slate"] .md-typeset a {
+  color: #5c9ce6 !important;
+}
+
+[data-md-color-scheme="slate"] .md-typeset a:hover {
+  color: #82b5f0 !important;
+}
+
+/* ============================================================================
+   Hero Section
+   ============================================================================ */
+
+.md-typeset .hero {
+  text-align: center;
+  padding: 2rem 1rem;
+  margin: -0.5rem 0 1rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #0d1f38 0%, #122E53 50%, #1a3d6b 100%);
+  color: #ffffff;
+}
+
+.md-typeset .hero h2 {
+  color: #ffffff;
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.md-typeset .hero p {
+  color: #ffffff;
+  opacity: 0.95;
+  max-width: 42rem;
+  margin: 0 auto 1rem;
+}
+
+.md-typeset .hero .md-button {
+  margin: 0.3rem;
+}
+
+.md-typeset .hero .md-button--primary {
+  background: #ffffff;
+  color: #122E53;
+  border-color: #ffffff;
+}
+
+.md-typeset .hero .md-button:not(.md-button--primary) {
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .hero {
+  background: linear-gradient(135deg, #0d1f38 0%, #122E53 50%, #1a3d6b 100%);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .hero h2,
+[data-md-color-scheme="slate"] .md-typeset .hero p {
+  color: #e3ecf7;
+}
+
+/* ============================================================================
+   Grid & Card System
+   ============================================================================ */
+
+.md-typeset .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.md-typeset .grid .card {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.5rem;
+  padding: 1.2rem;
+  transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.md-typeset .grid .card:hover {
+  border-color: var(--md-accent-fg-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.md-typeset .grid .card h3 {
+  margin-top: 0;
+}
+
+/* ============================================================================
+   Stat Grid
+   ============================================================================ */
+
+.md-typeset .stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.md-typeset .stat-grid .stat {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: var(--md-code-bg-color);
+}
+
+.md-typeset .stat-grid .stat .number {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--md-primary-fg-color);
+  line-height: 1.2;
+}
+
+.md-typeset .stat-grid .stat .label {
+  font-size: 0.8rem;
+  color: var(--md-default-fg-color--light);
+}
+
+/* ============================================================================
+   Buttons — Global contrast fix
+   ============================================================================ */
+
+.md-typeset .md-button--primary {
+  background-color: var(--md-accent-fg-color) !important;
+  color: #ffffff !important;
+  border-color: var(--md-accent-fg-color) !important;
+}
+
+.md-typeset .md-button--primary:hover,
+.md-typeset .md-button--primary:focus {
+  background-color: #1a3d6b !important;
+  color: #ffffff !important;
+  border-color: #1a3d6b !important;
+}
+
+.md-typeset .md-button:not(.md-button--primary) {
+  color: var(--md-accent-fg-color) !important;
+  border-color: var(--md-accent-fg-color) !important;
+}
+
+.md-typeset .md-button:not(.md-button--primary):hover,
+.md-typeset .md-button:not(.md-button--primary):focus {
+  background-color: var(--md-accent-fg-color) !important;
+  color: #ffffff !important;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .md-button--primary {
+  background-color: #1a3d6b !important;
+  color: #ffffff !important;
+  border-color: #1a3d6b !important;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .md-button--primary:hover,
+[data-md-color-scheme="slate"] .md-typeset .md-button--primary:focus {
+  background-color: #2a4d7b !important;
+  color: #ffffff !important;
+  border-color: #2a4d7b !important;
+}
