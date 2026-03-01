@@ -28,17 +28,13 @@ jobs:
           cache: "pip"
           
       - name: Install uv
-        run: |
-          curl --location --silent --show-error --fail https://astral.sh/uv/install.sh | sh
-                echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        uses: astral-sh/setup-uv@v5
 
       - name: Install dependencies
-        run: |
-          uv sync
-          uv sync --dev
+        run: uv sync --group dev
 
       - name: Run dependapy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          uv run dependapy.main
+          uv run dependapy .

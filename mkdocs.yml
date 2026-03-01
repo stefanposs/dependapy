@@ -1,0 +1,100 @@
+# MkDocs configuration for dependapy documentation.
+# Source files:  assets/mkdocs/
+# Build output:  docs/  (served by GitHub Pages from main/docs)
+
+site_name: dependapy Documentation
+site_description: >-
+  Python dependency governance platform — scan, analyze, and update
+  pyproject.toml dependencies with clean Onion Architecture.
+site_url: https://stefanposs.github.io/dependapy/
+
+repo_name: stefanposs/dependapy
+repo_url: https://github.com/stefanposs/dependapy
+
+docs_dir: assets/mkdocs
+site_dir: docs
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.instant
+    - navigation.tracking
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+  font:
+    text: Roboto
+    code: Roboto Mono
+  icon:
+    repo: fontawesome/brands/github
+
+extra_css:
+  - stylesheets/extra.css
+
+plugins:
+  - search
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.snippets
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - admonition
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Why dependapy: why-dependapy.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quick-start.md
+    - Configuration: getting-started/configuration.md
+    - GitHub Action: getting-started/github-action.md
+  - User Guide:
+    - Overview: guide/index.md
+    - Offline Mode: guide/offline-mode.md
+    - UV Integration: guide/uv-integration.md
+    - Policy & Governance: guide/policy.md
+  - Architecture:
+    - System Overview: architecture/overview.md
+    - Onion Layers: architecture/onion-layers.md
+    - Ports & Adapters: architecture/ports-adapters.md
+    - Result Pattern: architecture/result-pattern.md
+  - Development:
+    - Contributing: development/contributing.md
+    - Testing: development/testing.md
+    - Code Quality: development/code-quality.md
