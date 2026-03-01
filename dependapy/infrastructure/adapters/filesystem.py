@@ -6,6 +6,7 @@ Liest und schreibt pyproject.toml-Dateien.
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import re
 import tomllib  # stdlib since Python 3.11, required by requires-python>=3.12
@@ -213,10 +214,8 @@ class FileSystemProjectRepository:
                 if len(parts) > 1:
                     ub_str = parts[1].strip()
                     if ub_str.startswith("<"):
-                        try:
+                        with contextlib.suppress(Exception):
                             upper_bound = Version.from_string(ub_str[1:].strip())
-                        except Exception:
-                            pass
                 try:
                     return VersionConstraint(
                         operator=ConstraintOperator(op),
