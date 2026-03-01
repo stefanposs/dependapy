@@ -49,3 +49,6 @@ coverage.xml
 # Project specific
 .pytest_cache/
 .coverage
+
+# MkDocs build output
+docs/

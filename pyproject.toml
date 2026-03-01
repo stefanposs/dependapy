@@ -1,20 +1,19 @@
 [project]
 name = "dependapy"
-version = "0.1.1"
-description = "A custom dependabot alternative for Python projects"
+version = "0.2.0"
+description = "A dependency governance platform for Python projects"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = {file = "LICENSE"}
 authors = [
     {name = "stefanposs", email = "hello@stefanposs.com"},
 ]
-keywords = ["dependencies", "update", "dependabot"]
+keywords = ["dependencies", "update", "dependabot", "governance", "policy"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -22,23 +21,32 @@ classifiers = [
 ]
 
 dependencies = [
-    "requests==2.32.4",
-    "packaging==23.2",
-    "tomli==2.0.1",
-    "PyGithub==2.6.1",
-    "ruff>=0.3.2",
+    "requests>=2.32.4",
+    "packaging>=25.0",
 ]
 
-
+[project.optional-dependencies]
+github = [
+    "PyGithub>=2.6.1",
+]
 [dependency-groups]
 dev = [
-    "pytest==7.4.0",
-    "pytest-mock==3.11.0",
-    "ruff==0.3.2",
-    "pyright==1.1.401",
-    "bandit==1.7.5",
-    "pytest-cov==4.1.0",
+    "pytest>=7.4.0",
+    "pytest-mock>=3.11.0",
+    "pytest-cov>=4.1.0",
+    "responses>=0.25.3",
+    "ruff>=0.11.13",
+    "pyright>=1.1.401",
+    "bandit>=1.7.5",
+    "import-linter>=2.3",
     "twine>=6.0.1",
+    "pip>=25.1.1",
+    "deptry>=0.23.0",
+    "radon>=6.0.1",
+    "pydeps>=3.0.1",
+    "mkdocs-material>=9.7",
+    "mkdocs>=1.6,<2",
+    "mkdocstrings[python]>=0.29",
 ]
 
 [build-system]
@@ -64,3 +72,73 @@ exclude = ["tests"]
 typeCheckingMode = "basic"
 stubPath = "typings"
 reportMissingImports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=dependapy --cov-report=term-missing --cov-fail-under=80"
+
+
+[tool.coverage.run]
+source = ["dependapy"]
+omit = [
+    "dependapy/main.py",
+    "dependapy/bootstrap.py",
+    "dependapy/presentation/cli.py",
+    "dependapy/infrastructure/vcs/git_client.py",
+    "dependapy/infrastructure/vcs/github.py",
+    "dependapy/infrastructure/vcs/offline.py",
+    "dependapy/infrastructure/adapters/policy_loader.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "\\.\\.\\.\\s*$",
+]
+
+[tool.importlinter]
+root_package = "dependapy"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Domain layer must not import from other layers"
+type = "forbidden"
+source_modules = ["dependapy.domain"]
+forbidden_modules = [
+    "dependapy.application",
+    "dependapy.infrastructure",
+    "dependapy.presentation",
+    "requests",
+    "github",
+]
+
+[[tool.importlinter.contracts]]
+name = "Application layer must not import from infrastructure or presentation"
+type = "forbidden"
+source_modules = ["dependapy.application"]
+forbidden_modules = [
+    "dependapy.infrastructure",
+    "dependapy.presentation",
+    "requests",
+    "subprocess",
+]
+
+[[tool.importlinter.contracts]]
+name = "Infrastructure layer must not import from presentation"
+type = "forbidden"
+source_modules = ["dependapy.infrastructure"]
+forbidden_modules = ["dependapy.presentation"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "ANN", "ARG", "PTH", "RUF"]
+ignore = ["ANN201", "ANN202", "ANN204"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ANN", "S", "ARG"]
+"dependapy/main.py" = ["ALL"]
