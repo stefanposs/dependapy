@@ -1,5 +1,5 @@
 # GitHub Actions workflow for building mkdocs documentation.
-# Builds from assets/mkdocs/ → docs/ and commits the result to main.
+# Cleans and rebuilds docs/ on every merge to main.
 # GitHub Pages is configured to serve from main/docs.
 
 name: Build Documentation
@@ -7,10 +7,6 @@ name: Build Documentation
 on:
   push:
     branches: [main]
-    paths:
-      - 'assets/mkdocs/**'
-      - 'mkdocs.yml'
-      - '.github/workflows/docs.yml'
   workflow_dispatch:
 
 permissions:
@@ -38,6 +34,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --group dev
 
+      - name: Clean old docs
+        run: rm -rf docs/
+
       - name: Build documentation
         run: NO_MKDOCS_2_WARNING=1 uv run mkdocs build --config-file mkdocs.yml --strict
 
@@ -45,8 +44,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/
-          # Only commit if there are actual changes
+          git add --force docs/
           if git diff --cached --quiet; then
             echo "No documentation changes to commit."
           else
