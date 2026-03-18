@@ -21,6 +21,9 @@ class PRRequest:
     base_branch: str
     title: str
     body: str
+    reviewers: list[str] | None = None
+    labels: list[str] | None = None
+    auto_merge: bool = False
 
 
 @dataclass(frozen=True, slots=True)

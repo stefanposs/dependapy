@@ -260,6 +260,9 @@ dependencies = [
 github = [
     { name = "pygithub" },
 ]
+policy = [
+    { name = "pyyaml" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -285,9 +288,10 @@ dev = [
 requires-dist = [
     { name = "packaging", specifier = ">=25.0" },
     { name = "pygithub", marker = "extra == 'github'", specifier = ">=2.6.1" },
+    { name = "pyyaml", marker = "extra == 'policy'", specifier = ">=6.0" },
     { name = "requests", specifier = ">=2.32.4" },
 ]
-provides-extras = ["github"]
+provides-extras = ["github", "policy"]
 
 [package.metadata.requires-dev]
 dev = [

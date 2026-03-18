@@ -22,6 +22,7 @@ from dependapy.domain.ports import (
 )
 from dependapy.infrastructure.adapters.endoflife import EndOfLifeAdapter
 from dependapy.infrastructure.adapters.filesystem import FileSystemProjectRepository
+from dependapy.infrastructure.adapters.offline_registry import OfflineRegistryAdapter
 from dependapy.infrastructure.adapters.pypi import PyPIAdapter
 from dependapy.infrastructure.http import HttpClient
 from dependapy.infrastructure.vcs.git_client import GitClient
@@ -77,19 +78,34 @@ def bootstrap(config: AppConfig | None = None) -> Application:
     if config is None:
         config = AppConfig.from_env()
 
-    # HTTP Client
-    http = HttpClient(timeout=config.api_timeout, max_retries=3)
+    closables: list[Closable] = []
+
+    if config.offline:
+        # Offline Mode: Keine HTTP-Verbindungen, lokale Versionsquellen
+        from pathlib import Path
+
+        logger.info("Offline-Modus aktiv — verwende lokale Versionsquellen")
+        registry: PackageRegistry = OfflineRegistryAdapter(Path.cwd())
+        python_reg: PythonVersionRegistry = EndOfLifeAdapter(
+            http_client=HttpClient(timeout=1, max_retries=0),
+            api_url=config.python_eol_api_url,
+            num_versions=config.num_latest_python_versions,
+        )
+    else:
+        # Online Mode: HTTP-Client mit Retry
+        http = HttpClient(timeout=config.api_timeout, max_retries=3)
+        registry = PyPIAdapter(
+            http_client=http,
+            base_url=config.pypi_base_url,
+        )
+        python_reg = EndOfLifeAdapter(
+            http_client=http,
+            api_url=config.python_eol_api_url,
+            num_versions=config.num_latest_python_versions,
+        )
+        closables.extend([registry, http])  # type: ignore[list-item]
 
     # Adapters
-    registry: PackageRegistry = PyPIAdapter(
-        http_client=http,
-        base_url=config.pypi_base_url,
-    )
-    python_reg: PythonVersionRegistry = EndOfLifeAdapter(
-        http_client=http,
-        api_url=config.python_eol_api_url,
-        num_versions=config.num_latest_python_versions,
-    )
     project_repo: ProjectRepository = FileSystemProjectRepository()
     vcs: VCSPort = _create_vcs(config)
 
@@ -103,7 +119,7 @@ def bootstrap(config: AppConfig | None = None) -> Application:
         apply=ApplyUpdates(project_repo=project_repo),
         submit=SubmitChanges(vcs=vcs),
         config=config,
-        _closables=[registry, http],
+        _closables=closables,
     )
 
 

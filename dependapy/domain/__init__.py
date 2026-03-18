@@ -20,6 +20,13 @@ from dependapy.domain.errors import (
     VCSError,
 )
 from dependapy.domain.models import Dependency, PlannedUpdate, PlanStatus, Project, UpdatePlan
+from dependapy.domain.policy import (
+    AllowRule,
+    CommitMessage,
+    DependencyGroup,
+    IgnoreRule,
+    Policy,
+)
 from dependapy.domain.result import Err, Ok, Result, collect_results
 from dependapy.domain.services import (
     compute_update_type,
@@ -36,12 +43,16 @@ from dependapy.domain.value_objects import (
 from dependapy.domain.vcs_types import PRRequest, PRResult, RepoInfo
 
 __all__ = [
+    "AllowRule",
     "BranchExistsError",
+    "CommitMessage",
     "ConfigurationError",
     "ConstraintOperator",
     "Dependency",
+    "DependencyGroup",
     "DomainError",
     "Err",
+    "IgnoreRule",
     "Ok",
     "PRCreationError",
     "PRRequest",
@@ -50,6 +61,7 @@ __all__ = [
     "PackageSpec",
     "PlanStatus",
     "PlannedUpdate",
+    "Policy",
     "PolicyError",
     "PolicyNotFoundError",
     "PolicyValidationError",

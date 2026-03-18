@@ -62,6 +62,13 @@ class AppConfig:
     vcs_base_branch: str = "main"
     branch_prefix: str = "dependapy/"
 
+    # PR Limits
+    max_prs: int = 10
+    notify_codeowners: bool = True
+
+    # Offline Mode — Air-Gapped Runner ohne Internet
+    offline: bool = False
+
     # Logging
     log_level: str = "INFO"
 
@@ -94,6 +101,13 @@ class AppConfig:
             "vcs_token": _env("VCS_TOKEN") or None,
             "vcs_base_branch": _env("VCS_BASE_BRANCH", str(fd.get("vcs_base_branch", "main"))),
             "branch_prefix": _env("BRANCH_PREFIX", str(fd.get("branch_prefix", "dependapy/"))),
+            "max_prs": int(_env("MAX_PRS", str(fd.get("max_prs", 10)))),
+            "notify_codeowners": _env(
+                "NOTIFY_CODEOWNERS", str(fd.get("notify_codeowners", True))
+            ).lower()
+            not in ("false", "0", "no"),
+            "offline": _env("OFFLINE", str(fd.get("offline", False))).lower()
+            not in ("false", "0", "no", ""),
             "log_level": _env("LOG_LEVEL", str(fd.get("log_level", "INFO"))),
             "policy_file": _env("POLICY_FILE", str(fd.get("policy_file", ".dependapy.yml"))),
         }

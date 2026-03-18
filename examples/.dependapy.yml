@@ -1,0 +1,48 @@
+# dependapy Policy Configuration
+# Place this file in your project root as .dependapy.yml or .dependapy.yaml
+# Docs: https://dependapy.readthedocs.io/en/latest/guide/policy/
+version: 1
+
+# Packages to ignore entirely — no PRs will be created
+ignore:
+  - name: "legacy-internal-*"
+    reason: "Maintained internally, updated manually"
+  - name: "setuptools"
+    reason: "Pinned for compatibility"
+
+# Restrict which update types are allowed per package
+allow:
+  - name: "boto*"
+    update-types: ["minor", "patch"]
+  - name: "django"
+    update-types: ["patch"]
+  - name: "*"
+    update-types: ["minor", "patch", "major"]
+
+# Labels applied to every PR dependapy creates
+labels:
+  - dependencies
+  - automated
+
+# Reviewers added to every PR (users and teams)
+reviewers:
+  - "@your-team/platform"
+
+# Assignees added to every PR
+assignees:
+  - "@your-username"
+
+# Commit message formatting
+commit-message:
+  prefix: "build(deps)"
+  include-scope: true  # Adds package name as scope, e.g. build(deps/requests):
+
+# Auto-merge PRs when all status checks pass (requires branch protection)
+auto-merge: true
+
+# Group related packages into a single PR
+groups:
+  - name: "aws"
+    patterns: ["boto*", "aws-*", "s3transfer"]
+  - name: "testing"
+    patterns: ["pytest*", "coverage", "responses"]

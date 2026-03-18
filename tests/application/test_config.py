@@ -16,6 +16,8 @@ class TestAppConfigDefaults:
         assert cfg.vcs_base_branch == "main"
         assert cfg.branch_prefix == "dependapy/"
         assert cfg.log_level == "INFO"
+        assert cfg.max_prs == 10
+        assert cfg.notify_codeowners is True
 
     def test_frozen(self) -> None:
         cfg = AppConfig()
@@ -47,6 +49,24 @@ class TestAppConfigFromEnv:
         monkeypatch.setenv("DEPENDAPY_VCS_TOKEN", "")
         cfg = AppConfig.from_env()
         assert cfg.vcs_token is None
+
+    def test_max_prs_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("DEPENDAPY_MAX_PRS", "5")
+        cfg = AppConfig.from_env()
+        assert cfg.max_prs == 5
+
+    def test_notify_codeowners_false(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("DEPENDAPY_NOTIFY_CODEOWNERS", "false")
+        cfg = AppConfig.from_env()
+        assert cfg.notify_codeowners is False
+
+    def test_notify_codeowners_true_by_default(self) -> None:
+        cfg = AppConfig.from_env()
+        assert cfg.notify_codeowners is True
+
+    def test_max_prs_override(self) -> None:
+        cfg = AppConfig.from_env(max_prs=3)
+        assert cfg.max_prs == 3
 
 
 class TestVCSProvider:
