@@ -52,7 +52,7 @@ class GitHubVCSAdapter:
     def create_pull_request(self, request: PRRequest) -> Result[PRResult, VCSError]:
         """Erstellt einen Pull Request via GitHub API (PyGithub)."""
         try:
-            from github import Github  # type: ignore[attr-defined]
+            from github import Github, GithubException  # type: ignore[attr-defined]
 
             gh = Github(self._token)
             repo = gh.get_repo(f"{request.repo_owner}/{request.repo_name}")
@@ -62,6 +62,19 @@ class GitHubVCSAdapter:
                 head=request.head_branch,
                 base=request.base_branch,
             )
+
+            # Reviewer zuweisen wenn angegeben
+            if request.reviewers:
+                self._assign_reviewers(pr, request.reviewers)
+
+            # Labels zuweisen wenn angegeben
+            if request.labels:
+                self._assign_labels(pr, request.labels)
+
+            # Auto-Merge aktivieren wenn konfiguriert
+            if request.auto_merge:
+                self._enable_auto_merge(pr)
+
             logger.info("PR erstellt: %s", pr.html_url)
             return Ok(
                 PRResult(
@@ -76,8 +89,45 @@ class GitHubVCSAdapter:
                     "PyGithub ist nicht installiert. Installiere mit: pip install dependapy[github]"
                 )
             )
+        except GithubException as e:
+            return Err(PRCreationError(f"GitHub PR-Erstellung fehlgeschlagen: {e}"))
         except Exception as e:
             return Err(PRCreationError(f"GitHub PR-Erstellung fehlgeschlagen: {e}"))
+
+    @staticmethod
+    def _assign_reviewers(pr: object, reviewers: list[str]) -> None:
+        """Weist Reviewer einem PR zu (Users und Teams)."""
+        users = [r.lstrip("@") for r in reviewers if "/" not in r]
+        # Teams: @org/team-name → nur team-name
+        teams = [r.split("/", 1)[1] for r in reviewers if "/" in r]
+
+        try:
+            if users or teams:
+                pr.create_review_request(reviewers=users or None, team_reviewers=teams or None)  # type: ignore[union-attr]
+                logger.info("Reviewer zugewiesen: %s", reviewers)
+        except Exception as e:
+            # Reviewer-Zuweisung ist nicht kritisch — nur loggen
+            logger.warning("Reviewer konnten nicht zugewiesen werden: %s", e)
+
+    @staticmethod
+    def _assign_labels(pr: object, labels: list[str]) -> None:
+        """Weist Labels einem PR zu."""
+        try:
+            pr.set_labels(*labels)  # type: ignore[union-attr]
+            logger.info("Labels zugewiesen: %s", labels)
+        except Exception as e:
+            # Label-Zuweisung ist nicht kritisch — nur loggen
+            logger.warning("Labels konnten nicht zugewiesen werden: %s", e)
+
+    @staticmethod
+    def _enable_auto_merge(pr: object) -> None:
+        """Aktiviert Auto-Merge auf dem PR (squash-merge)."""
+        try:
+            pr.enable_automerge(merge_method="SQUASH")  # type: ignore[union-attr]
+            logger.info("Auto-Merge aktiviert für PR #%s", getattr(pr, "number", "?"))
+        except Exception as e:
+            # Auto-Merge braucht Branch-Protection-Rules — nur loggen
+            logger.warning("Auto-Merge konnte nicht aktiviert werden: %s", e)
 
     def get_repo_info(self, repo_path: Path) -> Result[RepoInfo, VCSError]:
         """Extrahiert Repository-Info aus der Git Remote URL."""

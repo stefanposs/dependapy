@@ -2,8 +2,8 @@ name: Dependapy
 
 on:
   schedule:
-    # Run every Sunday at 02:00 UTC
-    - cron: '0 2 * * 0'
+    # Run daily at 06:00 UTC
+    - cron: '0 6 * * *'
   workflow_dispatch:  # Allow manual triggering
 
 jobs:
@@ -25,16 +25,52 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-          cache: "pip"
-          
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
       - name: Install dependencies
         run: uv sync --group dev
 
+      - name: Configure Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
       - name: Run dependapy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPENDAPY_VCS_PROVIDER: github
+          DEPENDAPY_VCS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPENDAPY_MAX_PRS: "10"
+          DEPENDAPY_NOTIFY_CODEOWNERS: "true"
         run: |
-          uv run dependapy .
+          uv run dependapy . --max-prs 10
+
+  # ── Offline / Air-Gapped Runner ───────────────────────────────────
+  # For runners without internet access, use --offline.
+  # dependapy reads versions from uv.lock or requirements.txt instead
+  # of querying PyPI. Combine with a .dependapy.yml policy file for
+  # ignore rules, labels, reviewers, and commit-message formatting.
+  #
+  # update-dependencies-offline:
+  #   name: Update Dependencies (Offline)
+  #   runs-on: self-hosted  # air-gapped runner
+  #   permissions:
+  #     contents: write
+  #     pull-requests: write
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #     - name: Configure Git identity
+  #       run: |
+  #         git config user.name "github-actions[bot]"
+  #         git config user.email "github-actions[bot]@users.noreply.github.com"
+  #     - name: Run dependapy (offline)
+  #       env:
+  #         DEPENDAPY_VCS_PROVIDER: github
+  #         DEPENDAPY_VCS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #         DEPENDAPY_OFFLINE: "true"
+  #       run: |
+  #         uv run dependapy . --offline --max-prs 5

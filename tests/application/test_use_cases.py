@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from dependapy.application.dtos import AnalysisResult
 from dependapy.application.use_cases import AnalyzeDependencies, ApplyUpdates, SubmitChanges
 from dependapy.domain.models import Project
 from dependapy.domain.value_objects import ConstraintOperator, VersionConstraint
@@ -313,3 +314,155 @@ class TestSubmitChanges:
         assert "dependapy/test-branch" in vcs.branches_created
         assert len(vcs.commits_made) == 1
         assert "dependapy/test-branch" in vcs.pushes_made
+
+    def test_reviewers_are_passed_to_pr_request(self, tmp_path: Path) -> None:
+        vcs = FakeVCSPort()
+        use_case = SubmitChanges(vcs=vcs)
+
+        use_case.execute(
+            repo_path=tmp_path,
+            updated_files=[tmp_path / "pyproject.toml"],
+            reviewers=["@alice", "@team/backend"],
+        )
+
+        assert len(vcs.prs_created) == 1
+        assert vcs.prs_created[0].reviewers == ["@alice", "@team/backend"]
+
+    def test_reviewers_default_is_none(self, tmp_path: Path) -> None:
+        vcs = FakeVCSPort()
+        use_case = SubmitChanges(vcs=vcs)
+
+        use_case.execute(
+            repo_path=tmp_path,
+            updated_files=[tmp_path / "pyproject.toml"],
+        )
+
+        assert len(vcs.prs_created) == 1
+        assert vcs.prs_created[0].reviewers is None
+
+
+class TestSubmitChangesPerProject:
+    """Tests für SubmitChanges.execute_per_project()."""
+
+    @staticmethod
+    def _make_analysis(name: str, outdated: int, path: Path | None = None) -> AnalysisResult:
+        deps = [make_dep(f"pkg-{i}", "1.0.0", latest="2.0.0") for i in range(max(outdated, 1))]
+        proj = Project(
+            name=name,
+            path=path or Path(f"/fake/{name}/pyproject.toml"),
+            dependencies=deps,
+        )
+        return AnalysisResult(project=proj, outdated_count=outdated, total_count=max(outdated, 1))
+
+    def test_creates_pr_per_project(self, tmp_path: Path) -> None:
+        vcs = FakeVCSPort()
+        use_case = SubmitChanges(vcs=vcs)
+
+        path_a = tmp_path / "a" / "pyproject.toml"
+        path_b = tmp_path / "b" / "pyproject.toml"
+
+        analysis_a = self._make_analysis("project-a", 2, path_a)
+        analysis_b = self._make_analysis("project-b", 1, path_b)
+
+        results = use_case.execute_per_project(
+            repo_path=tmp_path,
+            analysis_results=[analysis_a, analysis_b],
+            updated_files_by_project={
+                path_a: [path_a],
+                path_b: [path_b],
+            },
+        )
+
+        assert len(results) == 2
+        assert all(r.is_ok() for r in results)
+        assert len(vcs.prs_created) == 2
+
+    def test_respects_max_prs_limit(self, tmp_path: Path) -> None:
+        vcs = FakeVCSPort()
+        use_case = SubmitChanges(vcs=vcs)
+
+        analyses = []
+        files_map: dict[Path, list[Path]] = {}
+        for i in range(5):
+            path = tmp_path / f"proj-{i}" / "pyproject.toml"
+            analysis = self._make_analysis(f"project-{i}", 1, path)
+            analyses.append(analysis)
+            files_map[path] = [path]
+
+        results = use_case.execute_per_project(
+            repo_path=tmp_path,
+            analysis_results=analyses,
+            updated_files_by_project=files_map,
+            max_prs=2,
+        )
+
+        assert len(results) == 2
+        assert len(vcs.prs_created) == 2
+
+    def test_skips_projects_without_outdated_deps(self, tmp_path: Path) -> None:
+        vcs = FakeVCSPort()
+        use_case = SubmitChanges(vcs=vcs)
+
+        path = tmp_path / "a" / "pyproject.toml"
+        analysis = self._make_analysis("project-a", 0, path)
+
+        results = use_case.execute_per_project(
+            repo_path=tmp_path,
+            analysis_results=[analysis],
+            updated_files_by_project={path: [path]},
+        )
+
+        assert len(results) == 0
+        assert len(vcs.prs_created) == 0
+
+    def test_assigns_reviewers_from_codeowners(self, tmp_path: Path) -> None:
+        vcs = FakeVCSPort()
+        use_case = SubmitChanges(vcs=vcs)
+
+        path = tmp_path / "dependapy" / "pyproject.toml"
+        analysis = self._make_analysis("dependapy", 2, path)
+        rel_path = str(path.relative_to(tmp_path))
+
+        results = use_case.execute_per_project(
+            repo_path=tmp_path,
+            analysis_results=[analysis],
+            updated_files_by_project={path: [path]},
+            reviewers_by_file={rel_path: ["@alice", "@team/core"]},
+        )
+
+        assert len(results) == 1
+        assert results[0].is_ok()
+        assert vcs.prs_created[0].reviewers == ["@alice", "@team/core"]
+
+    def test_branch_name_uses_project_name(self, tmp_path: Path) -> None:
+        vcs = FakeVCSPort()
+        use_case = SubmitChanges(vcs=vcs)
+
+        path = tmp_path / "my-app" / "pyproject.toml"
+        analysis = self._make_analysis("my-app", 1, path)
+
+        use_case.execute_per_project(
+            repo_path=tmp_path,
+            analysis_results=[analysis],
+            updated_files_by_project={path: [path]},
+            branch_prefix="dependapy/",
+        )
+
+        assert "dependapy/update-my-app" in vcs.branches_created
+
+    def test_continues_after_failed_pr(self, tmp_path: Path) -> None:
+        """Wenn ein PR fehlschlägt, werden die restlichen trotzdem erstellt."""
+        vcs = FakeVCSPort(fail_on_pr=True)
+        use_case = SubmitChanges(vcs=vcs)
+
+        path = tmp_path / "a" / "pyproject.toml"
+        analysis = self._make_analysis("project-a", 1, path)
+
+        results = use_case.execute_per_project(
+            repo_path=tmp_path,
+            analysis_results=[analysis],
+            updated_files_by_project={path: [path]},
+        )
+
+        assert len(results) == 1
+        assert results[0].is_err()

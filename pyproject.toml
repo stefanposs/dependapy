@@ -29,6 +29,9 @@ dependencies = [
 github = [
     "PyGithub>=2.6.1",
 ]
+policy = [
+    "PyYAML>=6.0",
+]
 [dependency-groups]
 dev = [
     "pytest>=7.4.0",
